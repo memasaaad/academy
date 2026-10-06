@@ -1,4 +1,4 @@
-# اكاديمية المهندس إبراهيم سعد
+# اكاديمية المهندس إبراهيم سعد--
 
 React + Vite + Supabase (Auth / PostgreSQL / Storage) — جاهز للنشر على Vercel.
 
