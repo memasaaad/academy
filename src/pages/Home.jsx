@@ -6,7 +6,7 @@ import { useTheme } from '../lib/theme'
 import { useAsync } from '../components/ui'
 import NotificationBell from '../components/NotificationBell'
 import { ResourceList } from '../components/Resources'
-import mark from '../assets/mark.png'
+import mark from '../pub/mark.webp'
 import art from '../pub/homeArt'
 import '../pub/home.css'
 const ICONS = { 0: 'M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 3v4M17 5h4', 1: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z M9 12l2 2 4-4', 2: 'M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18 M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18', 3: 'M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16' }
@@ -16,7 +16,7 @@ export default function Home() {
   const { session, profile, isAdmin, signOut } = useAuth(), { toggle } = useTheme(), nav = useNavigate(), [cur, setCur] = useState(0), [open, setOpen] = useState(null)
   const ok = session && profile && (isAdmin || profile.active)
   const { data } = useAsync(async () => {
-    const c = await sb.from('chapters').select('*, lessons(*)').order('position'); const chs = (c.data || []).map(x => ({ ...x, lessons: x.lessons.sort((p, q) => p.position - q.position) }))
+    const c = await sb.from('chapters').select('*, lessons(*)').is('track_id', null).order('position'); const chs = (c.data || []).map(x => ({ ...x, lessons: x.lessons.sort((p, q) => p.position - q.position) }))
     if (!ok) return { chs, asg: [], res: [] }
     const [a, r] = await Promise.all([sb.from('assignments').select('id,title,lesson_id').eq('is_open', true), sb.from('lesson_resources').select('*').eq('active', true).order('position')])
     return { chs, asg: a.data || [], res: r.data || [] } }, [ok])
@@ -29,7 +29,7 @@ export default function Home() {
         <button className="p-btn p-theme" onClick={toggle} aria-label="تبديل الوضع الليلي والنهاري"><svg className="p-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></svg><svg className="p-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" /></svg></button>
         {session && ok && !isAdmin && <NotificationBell />}
         {session ? <><Link className="p-btn p-fill" to={dash}>{isAdmin ? 'لوحة المدرس' : 'واجباتي'}</Link><button className="p-btn" onClick={async () => { await signOut(); nav('/') }}>خروج</button></>
-          : <><Link className="p-btn" to="/auth?mode=up">إنشاء حساب</Link><Link className="p-btn p-fill" to="/auth">تسجيل الدخول</Link></>}
+          : <><Link className="p-btn p-signup" to="/auth?mode=up">إنشاء حساب</Link><Link className="p-btn p-fill" to="/auth">تسجيل الدخول</Link></>}
       </div></div></header>
     <main>
       <section className="p-hero"><div className="p-wrap"><div>

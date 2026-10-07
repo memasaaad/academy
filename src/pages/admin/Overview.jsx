@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Activity, ClipboardCheck, ClipboardList, Gauge, PenLine, Users } from 'lucide-react'
 import { sb } from '../../lib/supabase'
 import { AreaChart } from '../../components/Charts'
+import OnlineNow from './OnlineNow'
 import { Badge, Btn, EmptyState, ErrorState, PageHeader, PageSkeleton, fdt, pct, useAsync } from '../../components/ui'
 const tones = ['tone1', 'tone2', 'tone3', 'tone4']
 export default function Overview() {
@@ -20,6 +21,7 @@ export default function Overview() {
   const chart = Object.entries(by).map(([l, v]) => ({ l, v: Math.round(v.reduce((x, y) => x + y, 0) / v.length) }))
   return <><PageHeader title="الرئيسية" desc="نظرة عامة على المنصة." />
     <div className="kpis">{[[Users, 'الطلاب', d.s], [ClipboardList, 'الواجبات', d.a], [PenLine, 'بانتظار التصحيح', d.pc], [Gauge, 'متوسط الأداء', d.avg + '%']].map(([I, l, v], i) => { return <div key={l} className="kpi big"><span className={'ic ' + tones[i]}><I size={22} className="i" /></span><div><span>{l}</span><b>{v}</b></div></div> })}</div>
+    <OnlineNow />
     <div className="card chartcard"><div className="row between wrapx"><div><h3 style={{ margin: 0 }}>متوسط الدرجات</h3><p className="muted small">متوسط نسبة الدرجات في اليوم الواحد.</p></div><select aria-label="الفترة" value={range} onChange={e => setRange(e.target.value)}><option value="7">آخر 7 أيام</option><option value="30">آخر 30 يومًا</option><option value="all">كل الفترة</option></select></div>
       {chart.length ? <AreaChart data={chart} /> : <EmptyState icon={Activity} title="لا توجد تسليمات في هذه الفترة" text="سيظهر الرسم بعد أن يسلّم الطلاب واجباتهم." />}</div>
     <div className="two" style={{ gridTemplateColumns: '1fr 1fr' }}>

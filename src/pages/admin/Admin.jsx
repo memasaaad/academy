@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
-import { Home, X, BarChart3, BookOpen, ClipboardList, FileQuestion, FileUp, GraduationCap, LayoutDashboard, LogOut, Menu as MenuI, PenLine, Trophy, Users } from 'lucide-react'
+import { Home, X, BarChart3, BookOpen, ClipboardList, FileQuestion, FileUp, GraduationCap, Layers, LayoutDashboard, LogOut, Menu as MenuI, PenLine, Trophy, Users } from 'lucide-react'
 import { sb } from '../../lib/supabase'
 import { useAuth } from '../../lib/auth'
 import { Brand } from '../../App'
@@ -16,7 +16,8 @@ import Grading from './Grading'
 import Results from './Results'
 import Analytics from './Analytics'
 import Import from './Import'
-const groups = [['', [['', LayoutDashboard, 'الرئيسية']]], ['المحتوى', [['curriculum', BookOpen, 'الفصول والدروس'], ['questions', FileQuestion, 'بنك الأسئلة'], ['import', FileUp, 'استيراد / تصدير']]],
+import Tracks from './Tracks'
+const groups = [['', [['', LayoutDashboard, 'الرئيسية']]], ['المحتوى', [['curriculum', BookOpen, 'الفصول والدروس'], ['tracks', Layers, 'مسارات البرمجة'], ['questions', FileQuestion, 'بنك الأسئلة'], ['import', FileUp, 'استيراد / تصدير']]],
   ['التقييم', [['assignments', ClipboardList, 'الواجبات'], ['grading', PenLine, 'التصحيح'], ['results', Trophy, 'النتائج']]], ['المتابعة', [['students', Users, 'الطلاب'], ['analytics', BarChart3, 'التحليلات']]]]
 const titles = Object.fromEntries(groups.flatMap(([, l]) => l.map(([p, , t]) => [p, t])))
 export default function Admin() {
@@ -31,6 +32,6 @@ export default function Admin() {
     <section className="admain"><header className="ahead"><IconBtn className="burger" icon={MenuI} label="فتح القائمة" onClick={() => setM(true)} /><div><div className="crumb">لوحة المدرس</div><h2>{titles[seg] || 'الرئيسية'}</h2></div><span className="sp" />
       <form className="search" onSubmit={e => { e.preventDefault(); go(`/admin/questions?q=${encodeURIComponent(q)}`) }}><SearchInput value={q} onChange={setQ} placeholder="ابحث في بنك الأسئلة…" /></form><ThemeToggle /><NotificationBell admin />
       <Menu label="الحساب" trigger={<button className="who" style={{ background: 'none', border: 0, cursor: 'pointer' }}><Avatar name={profile?.full_name} /><span className="hide-m"><b className="small">م/ إبراهيم سعد</b><small>مدرس</small></span></button>}><button className="dng" onClick={async () => { await signOut(); go('/') }}><LogOut size={17} className="i" />تسجيل الخروج</button></Menu></header>
-      <div className="acontent"><Routes><Route index element={<Overview />} /><Route path="curriculum" element={<Curriculum />} /><Route path="questions" element={<Questions />} /><Route path="import" element={<Import />} />
+      <div className="acontent"><Routes><Route index element={<Overview />} /><Route path="curriculum" element={<Curriculum />} /><Route path="tracks" element={<Tracks />} /><Route path="questions" element={<Questions />} /><Route path="import" element={<Import />} />
         <Route path="assignments" element={<Assignments />} /><Route path="students" element={<Students />} /><Route path="grading" element={<Grading />} /><Route path="results" element={<Results />} /><Route path="analytics" element={<Analytics />} /></Routes></div></section></div>
 }
