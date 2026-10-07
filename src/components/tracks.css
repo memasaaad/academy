@@ -35,6 +35,19 @@
 .cb-res .rl:hover{background:var(--c-primary-soft)}
 .cb-asg{display:flex;align-items:center;gap:var(--s3);padding:9px 12px;margin-block:4px;border:1px solid var(--c-border);border-radius:var(--r-md);background:var(--c-surface)}
 .cb-exam{display:flex;align-items:center;gap:var(--s3);padding:var(--s3) var(--s4);background:var(--c-primary-soft);border-top:1px solid var(--c-border)}
-
 /* الفوتر دائمًا في آخر الصفحة حتى لو المحتوى قصير */
-.shell{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column}.shell>main{flex:1 0 auto}.shell>footer.foot{flex-shrink:0}
+
+.shell {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.shell > main {
+  flex: 1 0 auto;
+}
+
+.shell > footer.foot {
+  flex-shrink: 0;
+}

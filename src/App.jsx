@@ -18,7 +18,7 @@ export const Brand = ({ to = '/', sub }) => <Link to={to} className="brand"><img
 function Shell() {
   const { profile, isAdmin, signOut } = useAuth(), nav = useNavigate(), student = profile && !isAdmin, home = useLocation().pathname === '/'
   const links = [['/dashboard', 'الرئيسية', HomeI], ['/learn', 'المنهج', BookOpen], ['/tracks', 'المسارات', Layers], ['/assignments', 'الواجبات', ClipboardList], ['/results', 'النتائج', Trophy]]
-  return <div className="shell" style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
+return <div className="shell" style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
     <header className={'topbar' + (home ? ' dark' : '')}><div className="in"><Brand />
       {student && <nav className="tnav" aria-label="التنقل الرئيسي">{links.map(([to, t]) => <NavLink key={to} to={to}>{t}</NavLink>)}</nav>}
       {!student && <nav className="tnav hide-m" aria-label="التنقل الرئيسي"><NavLink to="/" end>الرئيسية</NavLink><a href="/#curriculum">المنهج</a><NavLink to={profile ? '/admin/assignments' : '/auth'}>الواجبات</NavLink></nav>}<span className="grow" /><div className="tools"><ThemeToggle />{student && <NotificationBell />}</div>
@@ -27,7 +27,9 @@ function Shell() {
         <button className="dng" onClick={async () => { await signOut(); nav('/') }}><LogOut size={17} className="i" />تسجيل الخروج</button></Menu>
         : <div className="row"><Link className={'btn sm hide-m ' + (home ? 'outline' : 'secondary')} to="/auth?mode=up">إنشاء حساب</Link><Link className={'btn sm ' + (home ? 'white' : '')} to="/auth">تسجيل الدخول</Link></div>}</div></header>
     <main style={{ flex: '1 0 auto' }}><Outlet /></main>
+
     <footer className="foot" style={{ flexShrink: 0 }}>جميع الحقوق محفوظة - Eng. Ibrahim Saad</footer>
+
     {student && <nav className="bnav" aria-label="التنقل السفلي">{[...links.slice(0, 4), ['/account', 'حسابي', User]].map(([to, t, I]) => <NavLink key={to} to={to}><I size={22} className="i" />{t}</NavLink>)}</nav>}</div>
 }
 const Guard = ({ admin, children }) => {
