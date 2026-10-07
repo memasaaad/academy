@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Eye, EyeOff, Lock, Phone, User } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import logo from '../assets/logo.webp'
+import { ThemeToggle } from '../lib/theme'
 import { Alert, Btn, Field, friendly } from '../components/ui'
 export default function Auth() {
   const { signIn, signUp } = useAuth(), nav = useNavigate(), [sp] = useSearchParams()
@@ -17,7 +18,7 @@ export default function Auth() {
   }
   const up = mode === 'up'
   return <div className="authpage"><aside className="authside"><span /><div style={{ textAlign: 'center' }}><img src={logo} alt="اكاديمية المهندس إبراهيم سعد" width="320" height="320" style={{ borderRadius: 24, maxWidth: '100%', height: 'auto' }} /><p style={{ margin: '16px auto 0' }}>تدرّب على أسئلة الكتاب، وراجع أخطاءك أولًا بأول.</p></div><small style={{ color: '#7c8aa5' }}>جميع الحقوق محفوظة - Eng. Ibrahim Saad</small></aside>
-    <div className="authform"><form onSubmit={go} noValidate><div className="authform-brand" style={{ marginBottom: 24 }}><Link to="/" className="muted small">← الصفحة الرئيسية</Link></div>
+    <div className="authform"><ThemeToggle className="themebtn" /><form onSubmit={go} noValidate><div className="authform-brand" style={{ marginBottom: 24 }}><Link to="/" className="muted small">← الصفحة الرئيسية</Link></div>
       <h1>{up ? 'إنشاء حساب طالب' : 'تسجيل الدخول'}</h1><p className="muted" style={{ marginBottom: 16 }}>{up ? 'أدخل بياناتك لتبدأ حل الواجبات.' : 'أهلًا بعودتك، أدخل بياناتك للمتابعة.'}</p>
       <Alert tone="success">{ok}</Alert><Alert>{err}</Alert>
       {up && <Field label="الاسم"><div className="inputicon"><User size={18} className="i" /><input required autoComplete="name" value={f.name} onChange={set('name')} /></div></Field>}

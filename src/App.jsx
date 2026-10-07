@@ -4,20 +4,22 @@ import { useAuth } from './lib/auth'
 import { BRAND } from './lib/brand'
 import mark from './assets/mark.png'
 import { Avatar, Menu, PageSkeleton } from './components/ui'
+import { ThemeToggle } from './lib/theme'
+import NotificationBell from './components/NotificationBell'
 import Home from './pages/Home'
 import Auth from './pages/Auth'
 import { StudentHome, Assignments, Results, Account } from './pages/Student'
 import Solve from './pages/Solve'
 import Review from './pages/Review'
 import Admin from './pages/admin/Admin'
-export const Brand = ({ to = '/', sub }) => <Link to={to} className="brand"><img className="mark" src={mark} alt="" width="38" height="38" /><span><b aria-label={BRAND}><span className="bn">اكاديمية المهندس</span><span className="bn">إبراهيم سعد</span></b>{sub && <small>{sub}</small>}</span></Link>
+export const Brand = ({ to = '/', sub }) => <Link to={to} className="brand"><img className="mark" src={mark} alt="" width="38" height="38" /><span><b>{BRAND}</b>{sub && <small>{sub}</small>}</span></Link>
 function Shell() {
   const { profile, isAdmin, signOut } = useAuth(), nav = useNavigate(), student = profile && !isAdmin, home = useLocation().pathname === '/'
   const links = [['/dashboard', 'الرئيسية', HomeI], ['/assignments', 'الواجبات', ClipboardList], ['/results', 'النتائج', Trophy]]
   return <>
     <header className={'topbar' + (home ? ' dark' : '')}><div className="in"><Brand />
       {student && <nav className="tnav" aria-label="التنقل الرئيسي">{links.map(([to, t]) => <NavLink key={to} to={to}>{t}</NavLink>)}</nav>}
-      {!student && <nav className="tnav hide-m" aria-label="التنقل الرئيسي"><NavLink to="/" end>الرئيسية</NavLink><a href="/#curriculum">المنهج</a><NavLink to={profile ? '/admin/assignments' : '/auth'}>الواجبات</NavLink></nav>}<span className="grow" />
+      {!student && <nav className="tnav hide-m" aria-label="التنقل الرئيسي"><NavLink to="/" end>الرئيسية</NavLink><a href="/#curriculum">المنهج</a><NavLink to={profile ? '/admin/assignments' : '/auth'}>الواجبات</NavLink></nav>}<span className="grow" /><div className="tools"><ThemeToggle />{student && <NotificationBell />}</div>
       {profile ? <Menu label="قائمة الحساب" trigger={<button className="row" style={{ background: 'none', border: 0, cursor: 'pointer' }}><Avatar name={profile.full_name} /><span className="hide-m small">{profile.full_name}</span></button>}>
         {isAdmin ? <Link to="/admin"><LayoutDashboard size={17} className="i" />لوحة المدرس</Link> : <Link to="/account"><User size={17} className="i" />حسابي</Link>}
         <button className="dng" onClick={async () => { await signOut(); nav('/') }}><LogOut size={17} className="i" />تسجيل الخروج</button></Menu>

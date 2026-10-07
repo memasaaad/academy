@@ -2,8 +2,9 @@ import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, CheckCircle2, Hourglass, MinusCircle, XCircle } from 'lucide-react'
 import { sb } from '../lib/supabase'
+import AnswerView, { isRich } from '../components/AnswerView'
 import { Badge, Btn, EmptyState, ErrorState, PageSkeleton, friendly, grade, nf, pct, useAsync } from '../components/ui'
-const arr = v => Array.isArray(v) ? v : v == null || v === '' ? [] : [v]
+const arr = v => Array.isArray(v) ? v : v == null || v === '' || isRich(v) ? [] : [v]
 export default function Review() {
   const { id } = useParams(), nav = useNavigate(), [wo, setWo] = useState(false), [cur, setCur] = useState(0)
   const { data: d, loading, error, reload } = useAsync(async () => { const { data, error } = await sb.rpc('get_attempt_review', { p_attempt: id }); if (error) throw error; return data }, [id])
@@ -19,7 +20,7 @@ export default function Review() {
       <div className="row between"><h2 style={{ fontSize: '1.1rem' }}>السؤال {String(it.n + 1).padStart(2, '0')}</h2><Badge tone={tone} icon={I}>{lb}</Badge></div>
       {it.context && <p className="ctx" style={{ marginTop: 10 }}>{it.context}</p>}<p style={{ fontSize: '1.1rem', fontWeight: 600, margin: '12px 0' }}>{it.text}</p>{it.code && <pre className="code">{it.code}</pre>}{it.image && <img className="qimg" src={it.image} alt="" />}
       {hasOpt ? it.options.map(o => { const ch = mine.includes(o.key); return <div key={o.key} className={'ansrow' + (o.correct ? ' right' : ch ? ' wrong' : '')}><span className="k">{o.key === 'true' ? '✓' : o.key === 'false' ? '✕' : o.key}</span><span>{o.text}</span><span className="tg">{ch && o.correct ? 'إجابتك · صحيحة' : ch ? 'إجابتك' : o.correct ? 'الإجابة الصحيحة' : ''}</span></div> })
-        : <><div className="ans"><b>إجابتك</b><p>{mine.join('، ') || 'لم تجب عن هذا السؤال'}</p></div>{!it.pending && (it.correct_answer || it.model_answer) && <div className="ans good"><b>الإجابة الصحيحة</b><p>{it.model_answer || String(it.correct_answer).replaceAll('|', ' أو ')}</p></div>}</>}
+        : <><div className="ans"><b>إجابتك</b>{isRich(it.answer) ? <AnswerView value={it.answer} /> : <p>{mine.join('، ') || 'لم تجب عن هذا السؤال'}</p>}</div>{!it.pending && (it.correct_answer || it.model_answer) && <div className="ans good"><b>الإجابة الصحيحة</b><p>{it.model_answer || String(it.correct_answer).replaceAll('|', ' أو ')}</p></div>}</>}
       {it.explanation && <div className="ans"><b>التفسير</b><p>{it.explanation}</p></div>}{it.feedback && <div className="ans note"><b>ملاحظة المدرس</b><p>{it.feedback}</p></div>}
       <div className="row between" style={{ marginTop: 16 }}><Btn variant="secondary" icon={ArrowRight} disabled={cur <= 0} onClick={() => setCur(cur - 1)}>السابق</Btn><span><span className="muted small">الدرجة </span><b>{s === 'pending' ? '—' : nf(it.earned ?? 0)} / {nf(it.marks)}</b></span><Btn disabled={cur >= items.length - 1} onClick={() => setCur(cur + 1)}>التالي<ArrowLeft size={18} className="i" /></Btn></div></article>
       <aside className="card revlist" style={{ margin: 0 }}><h3>الأسئلة</h3><label className="check" style={{ marginBottom: 8 }}><input type="checkbox" checked={wo} onChange={e => { setWo(e.target.checked); setCur(0) }} />الأخطاء فقط</label>

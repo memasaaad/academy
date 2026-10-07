@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { ArrowRight, ClipboardCheck, Check, X } from 'lucide-react'
 import { sb } from '../../lib/supabase'
+import AnswerView, { isRich } from '../../components/AnswerView'
 import { Alert, Badge, Btn, EmptyState, ErrorState, Field, PageHeader, PageSkeleton, Progress, fdt, friendly, useAsync, useUi } from '../../components/ui'
 export default function Grading() {
   const [sp, setSp] = useSearchParams(), cur = sp.get('attempt'), [flt, setFlt] = useState('')
@@ -29,7 +30,7 @@ function Work({ id, meta, back }) {
   const doneN = total - left.length
   return <><Btn variant="ghost" size="sm" icon={ArrowRight} onClick={back}>رجوع إلى القائمة</Btn><PageHeader title={meta?.profiles?.full_name || 'تصحيح'} desc={meta?.assignments?.title} />
     <div className="card"><div className="row between small muted"><span>السؤال {doneN + 1} من {total}</span><span>{left.length} متبقٍ</span></div><div style={{ marginTop: 8 }}><Progress value={(doneN / total) * 100} /></div></div>
-    <div className="card"><h3 style={{ fontSize: '1.1rem' }}>{q.question_text}</h3><div className="ans"><b>إجابة الطالب</b><p>{mine || 'لم يجب عن هذا السؤال'}</p></div>
+    <div className="card"><h3 style={{ fontSize: '1.1rem' }}>{q.question_text}</h3><div className="ans"><b>إجابة الطالب</b>{isRich(cur.answer) ? <AnswerView value={cur.answer} /> : <p>{mine || 'لم يجب عن هذا السؤال'}</p>}</div>
       <div className="ans good"><b>الإجابة النموذجية</b><p>{q.model_answer || right || (typeof q.correct_answer === 'string' ? q.correct_answer : q.correct_answer ? JSON.stringify(q.correct_answer) : '—')}</p></div>
       <Alert>{err}</Alert>{q.question_type !== 'essay' && <div className="row" style={{ margin: '12px 0' }}><Btn variant="success" icon={Check} onClick={() => setM(String(q.marks))}>صحيحة (الدرجة كاملة)</Btn><Btn variant="secondary" icon={X} onClick={() => setM('0')}>خطأ (صفر)</Btn></div>}
       <div className="grid2"><Field label={`الدرجة (من ${q.marks})`}><input type="number" step="0.5" min="0" max={q.marks} value={m} onChange={e => setM(e.target.value)} /></Field></div><Field label="ملاحظة للطالب (اختياري)"><textarea rows={2} value={fb} onChange={e => setFb(e.target.value)} /></Field>

@@ -4,7 +4,7 @@ React + Vite + Supabase (Auth / PostgreSQL / Storage) — جاهز للنشر ع
 
 ## 1) Supabase (مشروع جديد خاص بك، بدل Lovable Cloud)
 1. أنشئ مشروعًا على supabase.com.
-2. SQL Editor ← شغّل بالترتيب: `supabase/migrations/001_schema.sql` ثم `supabase/migrations/002_review_notify.sql` (إشعارات المدرس + مراجعة الحل). (ينشئ الجداول + RLS + الدوال + bucket الصور + فصول ودروس الكتاب الـ 4 فصول/14 درس).
+2. SQL Editor ← شغّل بالترتيب: `supabase/migrations/001_schema.sql` ثم `002_review_notify.sql` (إشعارات المدرس + مراجعة الحل)، ثم `003_student_notifications_uploads.sql` (إشعارات الطالب + رفع صور إجابات المقالي في bucket خاص `answer-images`). (ينشئ الجداول + RLS + الدوال + bucket الصور + فصول ودروس الكتاب الـ 4 فصول/14 درس).
 3. Authentication ← Providers ← Email ← **أوقف "Confirm email"** (الطلاب يسجلون برقم الهاتف).
 4. Project Settings ← API: انسخ `URL` و `publishable/anon key` و `service_role key`.
 
@@ -45,3 +45,6 @@ SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... ADMIN_EMAIL=you@mail.com ADMIN_PA
 - `src/components/ui.jsx`: Button, Badge, Modal, Menu, Toast, Dialog (تأكيد/إدخال بدل prompt/confirm), Skeleton, EmptyState, ErrorState, Progress, Pager, `useAsync`.
 - الأيقونات: Lucide. الخط: IBM Plex Sans Arabic. الأرقام لاتينية موحدة.
 - مسارات الطالب: `/dashboard` `/assignments` `/results` `/account` `/review/:id` `/solve/:id`. المدرس: `/admin/*`.
+
+## الوضع الليلي
+زر القمر/الشمس في كل الصفحات. الاختيار يُحفظ في المتصفح، والافتراضي يتبع إعداد الجهاز.
