@@ -1,34 +1,44 @@
-import { Link, Navigate, Route, Routes, Outlet } from 'react-router-dom'
+import { Link, NavLink, Navigate, Outlet, Route, Routes, useNavigate } from 'react-router-dom'
+import { BookOpen, ClipboardList, Home as HomeI, LogOut, Trophy, User, LayoutDashboard } from 'lucide-react'
 import { useAuth } from './lib/auth'
+import { BRAND } from './lib/brand'
+import { Avatar, Menu, PageSkeleton } from './components/ui'
 import Home from './pages/Home'
 import Auth from './pages/Auth'
-import Dashboard from './pages/Dashboard'
+import { StudentHome, Assignments, Results, Account } from './pages/Student'
 import Solve from './pages/Solve'
-import Admin from './pages/admin/Admin'
 import Review from './pages/Review'
-export const BRAND = 'اكاديمية المهندس إبراهيم سعد'
+import Admin from './pages/admin/Admin'
+export const Brand = ({ to = '/', sub }) => <Link to={to} className="brand"><span className="mark" aria-hidden>إ</span><span>{BRAND}{sub && <small>{sub}</small>}</span></Link>
 function Shell() {
-  const { profile, isAdmin, signOut } = useAuth()
-  return <div className="app">
-    <header className="top"><Link to="/" className="brand"><span className="logo">{'</>'}</span>{BRAND}</Link>
-      <nav>{profile ? <>{isAdmin ? <Link to="/admin">لوحة المدرس</Link> : <Link to="/dashboard">واجباتي</Link>}<button className="link" onClick={signOut}>خروج</button></> : <Link to="/auth">دخول</Link>}</nav></header>
+  const { profile, isAdmin, signOut } = useAuth(), nav = useNavigate(), student = profile && !isAdmin
+  const links = [['/dashboard', 'الرئيسية', HomeI], ['/assignments', 'الواجبات', ClipboardList], ['/results', 'النتائج', Trophy]]
+  return <>
+    <header className="topbar"><div className="in"><Brand />
+      {student && <nav className="tnav" aria-label="التنقل الرئيسي">{links.map(([to, t]) => <NavLink key={to} to={to}>{t}</NavLink>)}</nav>}<span className="grow" />
+      {profile ? <Menu label="قائمة الحساب" trigger={<button className="row" style={{ background: 'none', border: 0, cursor: 'pointer' }}><Avatar name={profile.full_name} /><span className="hide-m small">{profile.full_name}</span></button>}>
+        {isAdmin ? <Link to="/admin"><LayoutDashboard size={17} className="i" />لوحة المدرس</Link> : <Link to="/account"><User size={17} className="i" />حسابي</Link>}
+        <button className="dng" onClick={async () => { await signOut(); nav('/') }}><LogOut size={17} className="i" />تسجيل الخروج</button></Menu>
+        : <Link className="btn sm" to="/auth">تسجيل الدخول</Link>}</div></header>
     <main><Outlet /></main>
-    <footer>جميع الحقوق محفوظة - Eng. Ibrahim Saad</footer>
-    {profile && !isAdmin && <nav className="bnav"><Link to="/">🏠<span>الرئيسية</span></Link><Link to="/dashboard">📝<span>واجباتي</span></Link><button onClick={signOut}>🚪<span>خروج</span></button></nav>}</div>
+    <footer className="foot">جميع الحقوق محفوظة - Eng. Ibrahim Saad</footer>
+    {student && <nav className="bnav" aria-label="التنقل السفلي">{[...links, ['/account', 'حسابي', User]].map(([to, t, I]) => <NavLink key={to} to={to}><I size={22} className="i" />{t}</NavLink>)}</nav>}</>
 }
 const Guard = ({ admin, children }) => {
   const { session, isAdmin, loading } = useAuth()
-  if (loading) return <div className="center">جارٍ التحميل…</div>
+  if (loading) return <div className="page"><PageSkeleton /></div>
   if (!session) return <Navigate to="/auth" replace />
   if (admin && !isAdmin) return <Navigate to="/dashboard" replace />
   return children
 }
 export default function App() {
-  return <Routes><Route element={<Shell />}>
-    <Route index element={<Home />} /><Route path="auth" element={<Auth />} />
-    <Route path="dashboard" element={<Guard><Dashboard /></Guard>} />
+  return <Routes>
+    <Route path="auth" element={<Auth />} />
     <Route path="solve/:id" element={<Guard><Solve /></Guard>} />
-    <Route path="review/:id" element={<Guard><Review /></Guard>} />
-    <Route path="*" element={<Navigate to="/" />} /></Route>
+    <Route element={<Shell />}>
+      <Route index element={<Home />} />
+      <Route path="dashboard" element={<Guard><StudentHome /></Guard>} /><Route path="assignments" element={<Guard><Assignments /></Guard>} />
+      <Route path="results" element={<Guard><Results /></Guard>} /><Route path="account" element={<Guard><Account /></Guard>} />
+      <Route path="review/:id" element={<Guard><Review /></Guard>} /><Route path="*" element={<Navigate to="/" />} /></Route>
     <Route path="admin/*" element={<Guard admin><Admin /></Guard>} /></Routes>
 }

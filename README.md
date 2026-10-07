@@ -39,3 +39,9 @@ SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... ADMIN_EMAIL=you@mail.com ADMIN_PA
 
 ## ملاحظة عن إعلان النتيجة
 في الواجب اليدوي (التصحيح التلقائي مغلق) الواجهة تخفي الدرجة عن الطالب حتى تنتهي من تصحيح كل الأسئلة، ودالة مراجعة الحل ترفض طلبه قبل ذلك. لكن رقم الدرجة نفسه يبقى قابلًا للقراءة من جدول attempts لمن يعرف يستعلم مباشرة.
+
+## نظام التصميم (إعادة التصميم)
+- `src/styles.css`: Design Tokens (ألوان، مسافات، radius، ظلال) + المكونات + نقاط الكسر (1100 / 860 / 640).
+- `src/components/ui.jsx`: Button, Badge, Modal, Menu, Toast, Dialog (تأكيد/إدخال بدل prompt/confirm), Skeleton, EmptyState, ErrorState, Progress, Pager, `useAsync`.
+- الأيقونات: Lucide. الخط: IBM Plex Sans Arabic. الأرقام لاتينية موحدة.
+- مسارات الطالب: `/dashboard` `/assignments` `/results` `/account` `/review/:id` `/solve/:id`. المدرس: `/admin/*`.

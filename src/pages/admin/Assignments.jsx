@@ -1,44 +1,49 @@
 import { useEffect, useState } from 'react'
+import { ArrowRight, ClipboardList, FileUp, Lock, LockOpen, Pencil, Plus, Trash2 } from 'lucide-react'
 import { sb } from '../../lib/supabase'
 import { TYPES, importQuestions } from '../../lib/qio'
+import { Alert, Badge, Btn, EmptyState, ErrorState, Field, IconBtn, PageHeader, PageSkeleton, SearchInput, fdate, friendly, useAsync, useUi } from '../../components/ui'
 const blank = { title: '', chapter_id: '', lesson_id: '', starts_at: '', ends_at: '', is_open: true, max_attempts: 1, total_marks: '', auto_grade: true }
 const loc = d => d ? new Date(new Date(d) - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 16) : ''
+const stat = a => !a.is_open ? ['مغلق', ''] : a.ends_at && new Date(a.ends_at) < Date.now() ? ['منتهي', 'danger'] : a.starts_at && new Date(a.starts_at) > Date.now() ? ['مجدول', 'info'] : ['مفتوح', 'success']
 export default function Assignments() {
-  const [list, setList] = useState([]), [chs, setChs] = useState([]), [f, setF] = useState(null), [qs, setQs] = useState([]), [sel, setSel] = useState(new Set()), [cnt, setCnt] = useState({}), [msg, setMsg] = useState('')
-  const load = async () => { setList((await sb.from('assignments').select('*, lessons(title), assignment_questions(count)').order('created_at', { ascending: false })).data || []); setChs((await sb.from('chapters').select('*, lessons(*)').order('position')).data || []) }
-  useEffect(() => { load() }, [])
+  const { confirm, toast } = useUi(), [f, setF] = useState(null), [qs, setQs] = useState([]), [sel, setSel] = useState(new Set()), [cnt, setCnt] = useState({}), [err, setErr] = useState(''), [q, setQ] = useState('')
+  const { data, loading, error, reload } = useAsync(async () => { const [a, c] = await Promise.all([sb.from('assignments').select('*, lessons(title), assignment_questions(count), attempts(status)').order('created_at', { ascending: false }), sb.from('chapters').select('*, lessons(*)').order('position')]); if (a.error) throw a.error; return { list: a.data, chs: c.data || [] } }, [])
   const loadQs = async () => { if (!f?.lesson_id) return setQs([]); const { data } = await sb.from('questions').select('id,question_type,question_text,marks').eq('lesson_id', f.lesson_id).eq('active', true).order('position'); setQs(data || []) }
   useEffect(() => { loadQs() }, [f?.lesson_id])
-  const upFile = async e => { const file = e.target.files[0]; if (!file) return; try { const l = JSON.parse(await file.text()); const r = await importQuestions(l, () => {}, { lessonId: f.lesson_id }); await loadQs(); setSel(s => new Set([...s, ...r.ids])); setMsg(`✅ تم رفع ${r.count} سؤال داخل الدرس المختار وتحديدها للواجب`) } catch (er) { setMsg('خطأ: ' + (er.message || JSON.stringify(er))) } e.target.value = '' }
-  const set = (k, v) => setF(x => ({ ...x, [k]: v })), lessons = chs.find(c => c.id === f?.chapter_id)?.lessons || []
-  const edit = async a => { const { data } = await sb.from('assignment_questions').select('question_id').eq('assignment_id', a.id); setSel(new Set((data || []).map(x => x.question_id))); setF({ ...a, chapter_id: a.chapter_id || '', starts_at: loc(a.starts_at), ends_at: loc(a.ends_at), total_marks: a.total_marks ?? '' }) }
-  const pick = () => { const s = new Set(); Object.entries(cnt).forEach(([t, n]) => { qs.filter(q => q.question_type === t).sort(() => Math.random() - 0.5).slice(0, +n || 0).forEach(q => s.add(q.id)) }); setSel(s) }
+  const set = (k, v) => setF(x => ({ ...x, [k]: v })), lessons = data?.chs.find(c => c.id === f?.chapter_id)?.lessons || []
+  const edit = async a => { const { data: d } = await sb.from('assignment_questions').select('question_id').eq('assignment_id', a.id); setSel(new Set((d || []).map(x => x.question_id))); setF({ ...a, chapter_id: a.chapter_id || '', starts_at: loc(a.starts_at), ends_at: loc(a.ends_at), total_marks: a.total_marks ?? '' }) }
+  const pick = () => { const s = new Set(); Object.entries(cnt).forEach(([t, n]) => qs.filter(x => x.question_type === t).sort(() => Math.random() - 0.5).slice(0, +n || 0).forEach(x => s.add(x.id))); setSel(s) }
   const tog = id => setSel(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n })
+  const upFile = async e => { const file = e.target.files[0]; if (!file) return; try { const l = JSON.parse(await file.text()); const r = await importQuestions(l, () => {}, { lessonId: f.lesson_id }); await loadQs(); setSel(s => new Set([...s, ...r.ids])); toast(`تم رفع ${r.count} سؤال داخل الدرس وتحديدها`) } catch (er) { toast(friendly(er), 'error') } e.target.value = '' }
   const save = async () => {
-    if (!f.title || !f.lesson_id) return setMsg('اكتب اسم الواجب واختر الدرس'); if (!sel.size) return setMsg('اختر أسئلة')
+    setErr(''); if (!f.title || !f.lesson_id) return setErr('اكتب اسم الواجب واختر الفصل والدرس.'); if (!sel.size) return setErr('اختر سؤالًا واحدًا على الأقل.')
     const row = { title: f.title, chapter_id: f.chapter_id || null, lesson_id: f.lesson_id, starts_at: f.starts_at ? new Date(f.starts_at).toISOString() : null, ends_at: f.ends_at ? new Date(f.ends_at).toISOString() : null, is_open: f.is_open, max_attempts: +f.max_attempts || 1, total_marks: f.total_marks ? +f.total_marks : null, auto_grade: f.auto_grade }
-    const r = f.id ? await sb.from('assignments').update(row).eq('id', f.id).select().single() : await sb.from('assignments').insert(row).select().single()
-    if (r.error) return setMsg(r.error.message)
+    const r = f.id ? await sb.from('assignments').update(row).eq('id', f.id).select().single() : await sb.from('assignments').insert(row).select().single(); if (r.error) return setErr(friendly(r.error))
     await sb.from('assignment_questions').delete().eq('assignment_id', r.data.id)
-    const { error } = await sb.from('assignment_questions').insert([...sel].map((question_id, position) => ({ assignment_id: r.data.id, question_id, position })))
-    if (error) return setMsg(error.message); setF(null); setMsg(''); load()
+    const { error } = await sb.from('assignment_questions').insert([...sel].map((question_id, position) => ({ assignment_id: r.data.id, question_id, position }))); if (error) return setErr(friendly(error))
+    toast(f.id ? 'تم حفظ الواجب' : 'تم إنشاء الواجب'); setF(null); reload()
   }
-  if (f) return <div className="card editor"><h3>{f.id ? 'تعديل واجب' : 'واجب جديد'}</h3>
-    <label>اسم الواجب<input value={f.title} onChange={e => set('title', e.target.value)} /></label>
-    <div className="grid2"><label>الفصل<select value={f.chapter_id} onChange={e => setF({ ...f, chapter_id: e.target.value, lesson_id: '' })}><option value="">—</option>{chs.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}</select></label>
-      <label>الدرس<select value={f.lesson_id} onChange={e => { setSel(new Set()); set('lesson_id', e.target.value) }}><option value="">—</option>{lessons.map(l => <option key={l.id} value={l.id}>{l.title}</option>)}</select></label>
-      <label>البداية<input type="datetime-local" value={f.starts_at} onChange={e => set('starts_at', e.target.value)} /></label><label>النهاية<input type="datetime-local" value={f.ends_at} onChange={e => set('ends_at', e.target.value)} /></label>
-      <label>عدد المحاولات<input type="number" min="1" value={f.max_attempts} onChange={e => set('max_attempts', e.target.value)} /></label><label>الدرجة الكلية (اتركها فارغة = مجموع الأسئلة)<input type="number" value={f.total_marks} onChange={e => set('total_marks', e.target.value)} /></label></div>
-    <label className="inl"><input type="checkbox" checked={f.is_open} onChange={e => set('is_open', e.target.checked)} /> الواجب مفتوح</label>
-    <label className="inl"><input type="checkbox" checked={f.auto_grade} onChange={e => set('auto_grade', e.target.checked)} /> تصحيح تلقائي للأسئلة الموضوعية — يظهر للطالب فورًا (المقالي يصححه المدرس). إن أُلغي: يصلك الواجب كله للتصحيح وتظهر النتيجة بعد الانتهاء</label>
-    {f.lesson_id && <><label>رفع ملف أسئلة (JSON) داخل هذا الدرس وإضافته للواجب<input type="file" accept=".json" onChange={upFile} /></label><h4>اختيار الأسئلة ({sel.size} من {qs.length})</h4>
-      <div className="bar"><button className="btn sm ghost" onClick={() => setSel(new Set(qs.map(q => q.id)))}>كل أسئلة الدرس</button><button className="btn sm ghost" onClick={() => setSel(new Set())}>مسح</button></div>
-      <p className="muted">أو حدد عددًا من كل نوع (يُختار عشوائيًا):</p>
-      <div className="bar">{Object.entries(TYPES).filter(([t]) => qs.some(q => q.question_type === t)).map(([t, n]) => <label key={t}>{n} ({qs.filter(q => q.question_type === t).length}) <input className="num" type="number" min="0" value={cnt[t] || ''} onChange={e => setCnt({ ...cnt, [t]: e.target.value })} /></label>)}<button className="btn sm" onClick={pick}>تطبيق</button></div>
-      <div className="pick">{qs.map(q => <label key={q.id} className="inl"><input type="checkbox" checked={sel.has(q.id)} onChange={() => tog(q.id)} /><span className="tag">{TYPES[q.question_type]}</span>{q.question_text.slice(0, 90)}</label>)}</div></>}
-    {msg && <p className="err">{msg}</p>}<div className="nav"><button className="btn ghost" onClick={() => setF(null)}>إلغاء</button><button className="btn" onClick={save}>حفظ الواجب</button></div></div>
-  return <div><button className="btn sm" onClick={() => { setSel(new Set()); setF(blank) }}>+ واجب جديد</button>
-    {list.map(a => <div key={a.id} className="card row"><div><b>{a.title}</b><div className="muted">{a.lessons?.title} • {a.assignment_questions?.[0]?.count} سؤال • {a.is_open ? 'مفتوح' : 'مغلق'}</div></div>
-      <div className="acts"><button className="link" onClick={() => edit(a)}>تعديل</button><button className="link" onClick={async () => { await sb.from('assignments').update({ is_open: !a.is_open }).eq('id', a.id); load() }}>{a.is_open ? 'إغلاق' : 'فتح'}</button>
-        <button className="link danger" onClick={async () => { if (confirm('حذف الواجب ونتائجه؟')) { await sb.from('assignments').delete().eq('id', a.id); load() } }}>حذف</button></div></div>)}</div>
+  if (loading) return <PageSkeleton />; if (error) return <ErrorState onRetry={reload} />
+  if (f) return <><Btn variant="ghost" size="sm" icon={ArrowRight} onClick={() => setF(null)}>رجوع إلى الواجبات</Btn><PageHeader title={f.id ? 'تعديل الواجب' : 'إنشاء واجب'} desc="حدد الدرس والمواعيد ثم اختر الأسئلة." />
+    <div className="card"><h3>بيانات الواجب</h3><Alert>{err}</Alert><Field label="اسم الواجب"><input value={f.title} onChange={e => set('title', e.target.value)} /></Field>
+      <div className="grid2"><Field label="الفصل"><select value={f.chapter_id} onChange={e => setF({ ...f, chapter_id: e.target.value, lesson_id: '' })}><option value="">اختر الفصل</option>{data.chs.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}</select></Field>
+        <Field label="الدرس"><select value={f.lesson_id} onChange={e => { setSel(new Set()); set('lesson_id', e.target.value) }}><option value="">اختر الدرس</option>{lessons.map(l => <option key={l.id} value={l.id}>{l.title}</option>)}</select></Field>
+        <Field label="تاريخ البداية"><input type="datetime-local" value={f.starts_at} onChange={e => set('starts_at', e.target.value)} /></Field><Field label="تاريخ النهاية"><input type="datetime-local" value={f.ends_at} onChange={e => set('ends_at', e.target.value)} /></Field>
+        <Field label="عدد المحاولات"><input type="number" min="1" value={f.max_attempts} onChange={e => set('max_attempts', e.target.value)} /></Field><Field label="الدرجة الكلية" hint="اتركها فارغة لتكون مجموع درجات الأسئلة"><input type="number" value={f.total_marks} onChange={e => set('total_marks', e.target.value)} /></Field></div>
+      <label className="check"><input type="checkbox" checked={f.is_open} onChange={e => set('is_open', e.target.checked)} />الواجب مفتوح للطلاب</label>
+      <label className="check"><input type="checkbox" checked={f.auto_grade} onChange={e => set('auto_grade', e.target.checked)} />تصحيح تلقائي للأسئلة الموضوعية</label>
+      <Alert tone="info">{f.auto_grade ? 'الطالب يرى درجة الأسئلة الموضوعية فور التسليم، والمقالي ينتظر تصحيحك.' : 'يصلك الواجب كله للتصحيح، ولا تظهر النتيجة للطالب إلا بعد انتهائك.'}</Alert></div>
+    {f.lesson_id ? <div className="card"><div className="row between wrapx"><h3 style={{ margin: 0 }}>الأسئلة ({sel.size} من {qs.length})</h3><div className="row wrapx"><Btn size="sm" variant="secondary" onClick={() => setSel(new Set(qs.map(x => x.id)))}>كل أسئلة الدرس</Btn><Btn size="sm" variant="secondary" onClick={() => setSel(new Set())}>مسح</Btn></div></div>
+      <Field label="رفع ملف أسئلة (JSON) داخل هذا الدرس" hint="تُضاف الأسئلة إلى الدرس المختار وتُحدد للواجب تلقائيًا."><input type="file" accept=".json" onChange={upFile} /></Field>
+      <p className="small muted">أو حدد عددًا من كل نوع (اختيار عشوائي):</p><div className="chk">{Object.entries(TYPES).filter(([t]) => qs.some(x => x.question_type === t)).map(([t, n]) => <div key={t}>{n} <span className="muted small">({qs.filter(x => x.question_type === t).length})</span><input className="num" type="number" min="0" aria-label={`عدد أسئلة ${n}`} value={cnt[t] || ''} onChange={e => setCnt({ ...cnt, [t]: e.target.value })} /></div>)}<Btn size="sm" onClick={pick}>تطبيق</Btn></div>
+      <div className="pick">{qs.map(x => <label key={x.id} className="check"><input type="checkbox" checked={sel.has(x.id)} onChange={() => tog(x.id)} /><Badge tone="primary">{TYPES[x.question_type]}</Badge><span className="small">{x.question_text.slice(0, 90)}</span></label>)}{!qs.length && <p className="muted small" style={{ padding: 12 }}>لا توجد أسئلة في هذا الدرس بعد. ارفع ملفًا أو أضف أسئلة من بنك الأسئلة.</p>}</div></div> : <Alert tone="info">اختر الفصل والدرس لتظهر أسئلتهما.</Alert>}
+    <div className="row" style={{ marginTop: 12 }}><Btn size="lg" onClick={save}>{f.id ? 'حفظ الواجب' : 'إنشاء الواجب'}</Btn><Btn size="lg" variant="secondary" onClick={() => setF(null)}>إلغاء</Btn></div></>
+  const list = data.list.filter(a => !q || a.title.includes(q))
+  return <><PageHeader title="الواجبات" desc={`${data.list.length} واجب`}><Btn icon={Plus} onClick={() => { setSel(new Set()); setCnt({}); setErr(''); setF(blank) }}>إنشاء واجب</Btn></PageHeader>
+    <div style={{ maxWidth: 360, marginBottom: 12 }}><SearchInput value={q} onChange={setQ} placeholder="ابحث باسم الواجب" /></div>
+    {!list.length ? <EmptyState icon={ClipboardList} title="لا توجد واجبات" text="أنشئ واجبًا من أسئلة أي درس ليظهر للطلاب." action={<Btn onClick={() => setF(blank)}>إنشاء واجب</Btn>} /> : list.map(a => { const [l, t] = stat(a), subs = a.attempts?.filter(x => x.status !== 'in_progress').length || 0, wait = a.attempts?.filter(x => x.status === 'submitted').length || 0
+      return <article key={a.id} className="acard"><span className="ic" aria-hidden><ClipboardList size={21} className="i" /></span><div className="grow"><div className="row wrapx"><h4>{a.title}</h4><Badge tone={t}>{l}</Badge>{!a.auto_grade && <Badge>تصحيح يدوي</Badge>}{wait > 0 && <Badge tone="warning">{wait} بانتظار التصحيح</Badge>}</div><p className="muted small">{a.lessons?.title}</p><div className="meta"><span>{a.assignment_questions?.[0]?.count} سؤال</span><span>{fdate(a.starts_at)} ← {fdate(a.ends_at)}</span><span>{subs} تسليم</span><span>{a.max_attempts} محاولة</span></div></div>
+        <div className="row act"><IconBtn icon={Pencil} label="تعديل" onClick={() => edit(a)} /><IconBtn icon={a.is_open ? Lock : LockOpen} label={a.is_open ? 'إغلاق الواجب' : 'فتح الواجب'} onClick={async () => { await sb.from('assignments').update({ is_open: !a.is_open }).eq('id', a.id); toast(a.is_open ? 'تم إغلاق الواجب' : 'تم فتح الواجب'); reload() }} />
+          <IconBtn icon={Trash2} label="حذف" onClick={async () => { if (await confirm('حذف الواجب؟', 'ستُحذف معه كل محاولات الطلاب ونتائجهم.')) { await sb.from('assignments').delete().eq('id', a.id); toast('تم حذف الواجب'); reload() } }} /></div></article> })}</>
 }
