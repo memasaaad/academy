@@ -62,4 +62,5 @@
 @media (max-width:860px){.pub-login .p-page{grid-template-columns:1fr}.pub-login .p-brand{order:2;padding:30px 20px 70px}.pub-login .p-side{padding-top:76px}.pub-login .p-brand svg.p-card{width:200px}}
 @media (prefers-reduced-motion:reduce){.pub-login *{transition:none!important}}
 /* --- adaptation: original used html,body{height:100%}; inside the React root the page needs its own full height --- */
-.pub-login .p-page{min-height:calc(100vh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
+.pub-login{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column}
+.pub-login .p-page{flex:1 0 auto;min-height:calc(100vh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
