@@ -29,7 +29,7 @@ export default function Home() {
         <button className="p-btn p-theme" onClick={toggle} aria-label="تبديل الوضع الليلي والنهاري"><svg className="p-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></svg><svg className="p-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" /></svg></button>
         {session && ok && !isAdmin && <NotificationBell />}
         {session ? <><Link className="p-btn p-fill" to={dash}>{isAdmin ? 'لوحة المدرس' : 'واجباتي'}</Link><button className="p-btn" onClick={async () => { await signOut(); nav('/') }}>خروج</button></>
-          : <><Link className="p-btn" to="/auth?mode=up">إنشاء حساب</Link><Link className="p-btn p-fill" to="/auth">تسجيل الدخول</Link></>}
+          : <><Link className="p-btn p-signup" to="/auth?mode=up">إنشاء حساب</Link><Link className="p-btn p-fill" to="/auth">تسجيل الدخول</Link></>}
       </div></div></header>
     <main>
       <section className="p-hero"><div className="p-wrap"><div>
