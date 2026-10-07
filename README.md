@@ -1,10 +1,10 @@
-# اكاديمية المهندس إبراهيم سعد--
+# اكاديمية المهندس إبراهيم سعد
 
 React + Vite + Supabase (Auth / PostgreSQL / Storage) — جاهز للنشر على Vercel.
 
 ## 1) Supabase (مشروع جديد خاص بك، بدل Lovable Cloud)
 1. أنشئ مشروعًا على supabase.com.
-2. SQL Editor ← الصق محتوى `supabase/migrations/001_schema.sql` ← Run. (ينشئ الجداول + RLS + الدوال + bucket الصور + فصول ودروس الكتاب الـ 4 فصول/14 درس).
+2. SQL Editor ← شغّل بالترتيب: `supabase/migrations/001_schema.sql` ثم `supabase/migrations/002_review_notify.sql` (إشعارات المدرس + مراجعة الحل). (ينشئ الجداول + RLS + الدوال + bucket الصور + فصول ودروس الكتاب الـ 4 فصول/14 درس).
 3. Authentication ← Providers ← Email ← **أوقف "Confirm email"** (الطلاب يسجلون برقم الهاتف).
 4. Project Settings ← API: انسخ `URL` و `publishable/anon key` و `service_role key`.
 
@@ -36,3 +36,6 @@ SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... ADMIN_EMAIL=you@mail.com ADMIN_PA
 - الإجابات الصحيحة في جدول `questions/question_options` للمدرس فقط (RLS)؛ الطالب يستلم الأسئلة عبر دالة `get_attempt_questions` بدون إجابات.
 - التصحيح يتم داخل قاعدة البيانات (`submit_attempt`)، والطالب لا يستطيع كتابة `is_correct` أو الدرجات.
 - مفتاح service_role يُستخدم فقط في `api/` و `scripts/`.
+
+## ملاحظة عن إعلان النتيجة
+في الواجب اليدوي (التصحيح التلقائي مغلق) الواجهة تخفي الدرجة عن الطالب حتى تنتهي من تصحيح كل الأسئلة، ودالة مراجعة الحل ترفض طلبه قبل ذلك. لكن رقم الدرجة نفسه يبقى قابلًا للقراءة من جدول attempts لمن يعرف يستعلم مباشرة.

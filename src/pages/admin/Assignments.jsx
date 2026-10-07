@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react'
 import { sb } from '../../lib/supabase'
-import { TYPES } from '../../lib/qio'
+import { TYPES, importQuestions } from '../../lib/qio'
 const blank = { title: '', chapter_id: '', lesson_id: '', starts_at: '', ends_at: '', is_open: true, max_attempts: 1, total_marks: '', auto_grade: true }
 const loc = d => d ? new Date(new Date(d) - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 16) : ''
 export default function Assignments() {
   const [list, setList] = useState([]), [chs, setChs] = useState([]), [f, setF] = useState(null), [qs, setQs] = useState([]), [sel, setSel] = useState(new Set()), [cnt, setCnt] = useState({}), [msg, setMsg] = useState('')
   const load = async () => { setList((await sb.from('assignments').select('*, lessons(title), assignment_questions(count)').order('created_at', { ascending: false })).data || []); setChs((await sb.from('chapters').select('*, lessons(*)').order('position')).data || []) }
   useEffect(() => { load() }, [])
-  useEffect(() => { if (!f?.lesson_id) return setQs([]); sb.from('questions').select('id,question_type,question_text,marks').eq('lesson_id', f.lesson_id).eq('active', true).order('position').then(({ data }) => setQs(data || [])) }, [f?.lesson_id])
+  const loadQs = async () => { if (!f?.lesson_id) return setQs([]); const { data } = await sb.from('questions').select('id,question_type,question_text,marks').eq('lesson_id', f.lesson_id).eq('active', true).order('position'); setQs(data || []) }
+  useEffect(() => { loadQs() }, [f?.lesson_id])
+  const upFile = async e => { const file = e.target.files[0]; if (!file) return; try { const l = JSON.parse(await file.text()); const r = await importQuestions(l, () => {}, { lessonId: f.lesson_id }); await loadQs(); setSel(s => new Set([...s, ...r.ids])); setMsg(`✅ تم رفع ${r.count} سؤال داخل الدرس المختار وتحديدها للواجب`) } catch (er) { setMsg('خطأ: ' + (er.message || JSON.stringify(er))) } e.target.value = '' }
   const set = (k, v) => setF(x => ({ ...x, [k]: v })), lessons = chs.find(c => c.id === f?.chapter_id)?.lessons || []
   const edit = async a => { const { data } = await sb.from('assignment_questions').select('question_id').eq('assignment_id', a.id); setSel(new Set((data || []).map(x => x.question_id))); setF({ ...a, chapter_id: a.chapter_id || '', starts_at: loc(a.starts_at), ends_at: loc(a.ends_at), total_marks: a.total_marks ?? '' }) }
   const pick = () => { const s = new Set(); Object.entries(cnt).forEach(([t, n]) => { qs.filter(q => q.question_type === t).sort(() => Math.random() - 0.5).slice(0, +n || 0).forEach(q => s.add(q.id)) }); setSel(s) }
@@ -28,8 +30,8 @@ export default function Assignments() {
       <label>البداية<input type="datetime-local" value={f.starts_at} onChange={e => set('starts_at', e.target.value)} /></label><label>النهاية<input type="datetime-local" value={f.ends_at} onChange={e => set('ends_at', e.target.value)} /></label>
       <label>عدد المحاولات<input type="number" min="1" value={f.max_attempts} onChange={e => set('max_attempts', e.target.value)} /></label><label>الدرجة الكلية (اتركها فارغة = مجموع الأسئلة)<input type="number" value={f.total_marks} onChange={e => set('total_marks', e.target.value)} /></label></div>
     <label className="inl"><input type="checkbox" checked={f.is_open} onChange={e => set('is_open', e.target.checked)} /> الواجب مفتوح</label>
-    <label className="inl"><input type="checkbox" checked={f.auto_grade} onChange={e => set('auto_grade', e.target.checked)} /> تصحيح تلقائي للأسئلة الموضوعية (وإلا تذهب كلها للتصحيح اليدوي)</label>
-    {f.lesson_id && <><h4>اختيار الأسئلة ({sel.size} من {qs.length})</h4>
+    <label className="inl"><input type="checkbox" checked={f.auto_grade} onChange={e => set('auto_grade', e.target.checked)} /> تصحيح تلقائي للأسئلة الموضوعية — يظهر للطالب فورًا (المقالي يصححه المدرس). إن أُلغي: يصلك الواجب كله للتصحيح وتظهر النتيجة بعد الانتهاء</label>
+    {f.lesson_id && <><label>رفع ملف أسئلة (JSON) داخل هذا الدرس وإضافته للواجب<input type="file" accept=".json" onChange={upFile} /></label><h4>اختيار الأسئلة ({sel.size} من {qs.length})</h4>
       <div className="bar"><button className="btn sm ghost" onClick={() => setSel(new Set(qs.map(q => q.id)))}>كل أسئلة الدرس</button><button className="btn sm ghost" onClick={() => setSel(new Set())}>مسح</button></div>
       <p className="muted">أو حدد عددًا من كل نوع (يُختار عشوائيًا):</p>
       <div className="bar">{Object.entries(TYPES).filter(([t]) => qs.some(q => q.question_type === t)).map(([t, n]) => <label key={t}>{n} ({qs.filter(q => q.question_type === t).length}) <input className="num" type="number" min="0" value={cnt[t] || ''} onChange={e => setCnt({ ...cnt, [t]: e.target.value })} /></label>)}<button className="btn sm" onClick={pick}>تطبيق</button></div>

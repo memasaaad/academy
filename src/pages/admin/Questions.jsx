@@ -1,27 +1,22 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { sb } from '../../lib/supabase'
-import { TYPES, validate, importQuestions, exportQuestions, download } from '../../lib/qio'
+import { TYPES } from '../../lib/qio'
 const empty = { question_type: 'mcq', question_text: '', marks: 1, active: true, options: [{ key: 'أ', text: '', is_correct: false }, { key: 'ب', text: '', is_correct: false }, { key: 'ج', text: '', is_correct: false }, { key: 'د', text: '', is_correct: false }], correct_answer: '' }
 export default function Questions() {
-  const [chs, setChs] = useState([]), [qs, setQs] = useState([]), [f, setF] = useState({ ch: '', ls: '', type: '', q: '', hidden: false, review: false }), [edit, setEdit] = useState(null), [msg, setMsg] = useState(''), [pct, setPct] = useState(null), file = useRef()
+  const [chs, setChs] = useState([]), [qs, setQs] = useState([]), [f, setF] = useState({ ch: '', ls: '', type: '', q: '', hidden: false, review: false }), [edit, setEdit] = useState(null)
   const lessons = useMemo(() => chs.flatMap(c => c.lessons.map(l => ({ ...l, ch: c }))), [chs])
   const load = async () => {
     const { data: c } = await sb.from('chapters').select('*, lessons(*)').order('position'); setChs((c || []).map(x => ({ ...x, lessons: x.lessons.sort((a, b) => a.position - b.position) })))
     const { data } = await sb.from('questions').select('*, question_options(*), question_sections(title)').order('position').limit(2000); setQs(data || []) }
   useEffect(() => { load() }, [])
   const shown = qs.filter(q => (!f.ls || q.lesson_id === f.ls) && (!f.ch || lessons.find(l => l.id === q.lesson_id)?.ch.id === f.ch) && (!f.type || q.question_type === f.type) && (!f.q || q.question_text.includes(f.q)) && (!f.hidden || !q.active) && (!f.review || q.needs_review))
-  const doImport = async e => {
-    const file = e.target.files[0]; if (!file) return
-    try { const list = JSON.parse(await file.text()); if (!Array.isArray(list)) throw new Error('الملف يجب أن يكون قائمة أسئلة')
-      const errs = validate(list); if (!confirm(`سيتم استيراد ${list.length} سؤال.${errs.length ? `\nتنبيهات (${errs.length}) ستُعلّم للمراجعة:\n` + errs.slice(0, 5).join('\n') : ''}\nمتابعة؟`)) return
-      setPct(0); const n = await importQuestions(list, setPct); setMsg(`تم استيراد ${n} سؤال ✓`); load() } catch (er) { setMsg('خطأ: ' + (er.message || er)) } setPct(null); e.target.value = '' }
   const patch = async (id, p) => { await sb.from('questions').update(p).eq('id', id); load() }
   const move = async q => { const t = prompt('انقل لأي درس؟ اكتب رقم:\n' + lessons.map((l, i) => `${i + 1}) ${l.title}`).join('\n')); const l = lessons[+t - 1]; if (l) patch(q.id, { lesson_id: l.id, section_id: null }) }
   return <div>
     <div className="bar"><button className="btn sm" onClick={() => setEdit({ ...empty, lesson_id: f.ls || lessons[0]?.id })}>+ سؤال جديد</button>
-      <button className="btn sm ghost" onClick={() => file.current.click()}>استيراد JSON</button><input hidden type="file" accept=".json" ref={file} onChange={doImport} />
-      <button className="btn sm ghost" onClick={async () => download(await exportQuestions(), 'questions-export.json')}>تصدير JSON</button></div>
-    {pct != null && <div className="prog"><div style={{ width: pct + '%' }} /></div>}{msg && <p>{msg}</p>}
+<Link className="btn sm ghost" to="/admin/import">استيراد / تصدير JSON</Link></div>
+    
     <div className="filters">
       <select value={f.ch} onChange={e => setF({ ...f, ch: e.target.value, ls: '' })}><option value="">كل الفصول</option>{chs.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}</select>
       <select value={f.ls} onChange={e => setF({ ...f, ls: e.target.value })}><option value="">كل الدروس</option>{lessons.filter(l => !f.ch || l.ch.id === f.ch).map(l => <option key={l.id} value={l.id}>{l.title}</option>)}</select>

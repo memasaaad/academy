@@ -1,21 +1,24 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { sb } from '../../lib/supabase'
-const level = p => p >= 85 ? 'ممتاز' : p >= 70 ? 'جيد جدًا' : p >= 50 ? 'متوسط' : 'يحتاج دعم'
+import { LineChart } from '../../components/Charts'
+import { useAuth } from '../../lib/auth'
 export default function Overview() {
-  const [d, setD] = useState(null)
+  const { profile } = useAuth(), [d, setD] = useState(null)
   useEffect(() => { (async () => {
-    const [{ data: at }, { data: st }, { count }] = await Promise.all([sb.from('attempts').select('score,max_score,student_id,profiles(full_name)').neq('status', 'in_progress'), sb.from('question_stats').select('*'), sb.from('questions').select('*', { count: 'exact', head: true })])
-    const p = x => x.max_score ? x.score / x.max_score * 100 : 0, by = {}
-    ;(at || []).forEach(a => { (by[a.student_id] ||= { name: a.profiles?.full_name, v: [] }).v.push(p(a)) })
-    const students = Object.values(by).map(s => ({ name: s.name, avg: s.v.reduce((a, b) => a + b, 0) / s.v.length })).sort((a, b) => b.avg - a.avg)
-    const qs = (st || []).filter(x => x.answered > 0).map(x => ({ ...x, pct: x.correct / x.answered * 100 }))
-    setD({ n: at?.length || 0, count, avg: students.length ? students.reduce((a, b) => a + b.avg, 0) / students.length : 0, students, hardest: [...qs].sort((a, b) => a.pct - b.pct).slice(0, 5), wrongest: [...qs].sort((a, b) => b.wrong - a.wrong).slice(0, 5) }) })() }, [])
+    const c = t => sb.from(t).select('*', { count: 'exact', head: true })
+    const [s, a, q, at, last] = await Promise.all([c('profiles').eq('role', 'student'), c('assignments'), c('questions'),
+      sb.from('attempts').select('score,max_score,pending_count,assignments(title)').neq('status', 'in_progress').order('submitted_at', { ascending: false }).limit(200), sb.from('assignments').select('id,title,ends_at,is_open,lessons(title)').order('created_at', { ascending: false }).limit(4)])
+    const rows = at.data || [], by = {}
+    rows.forEach(r => { const k = r.assignments?.title || '—'; (by[k] ||= []).push(r.max_score ? r.score / r.max_score * 100 : 0) })
+    const chart = Object.entries(by).slice(0, 7).reverse().map(([l, v]) => ({ l, v: Math.round(v.reduce((x, y) => x + y, 0) / v.length) }))
+    const avg = rows.length ? Math.round(rows.reduce((x, r) => x + (r.max_score ? r.score / r.max_score * 100 : 0), 0) / rows.length) : 0
+    setD({ s: s.count, a: a.count, q: q.count, avg, pending: rows.filter(r => r.pending_count > 0).length, chart, last: last.data || [] }) })() }, [])
   if (!d) return <div className="center">جارٍ التحميل…</div>
-  const r = x => Math.round(x)
-  return <div><div className="stats"><div className="card"><b>{d.n}</b><span>تسليمات</span></div><div className="card"><b>{d.count}</b><span>سؤال في البنك</span></div><div className="card"><b>{r(d.avg)}%</b><span>متوسط الدرجات</span></div>
-    <div className="card"><b>{d.students[0]?.name || '—'}</b><span>أعلى طالب {d.students[0] && r(d.students[0].avg) + '%'}</span></div>
-    <div className="card"><b>{d.students.at(-1)?.name || '—'}</b><span>أقل طالب {d.students.at(-1) && r(d.students.at(-1).avg) + '%'}</span></div></div>
-    <div className="card"><h3>أصعب الأسئلة (أقل نسبة صحة)</h3>{d.hardest.map(x => <p key={x.question_id}>{r(x.pct)}% — {x.question_text.slice(0, 80)}</p>)}</div>
-    <div className="card"><h3>أكثر الأسئلة خطأً</h3>{d.wrongest.map(x => <p key={x.question_id}>{x.wrong} خطأ من {x.answered} — {x.question_text.slice(0, 80)}</p>)}</div>
-    <div className="card"><h3>مستوى الطلاب</h3>{d.students.map(s => <div key={s.name} className="row"><span>{s.name}</span><span>{r(s.avg)}% — {level(s.avg)}</span></div>)}</div></div>
+  return <div><h2 className="ptitle">مرحبًا أ. إبراهيم سعد 👋</h2><p className="muted">إليك نظرة عامة على منصة التعليم — {profile?.full_name}</p>
+    <div className="stats"><div className="card st"><i className="b1">👥</i><b>{d.s}</b><span>إجمالي الطلاب</span></div><div className="card st"><i className="b2">📝</i><b>{d.a}</b><span>إجمالي الواجبات</span></div>
+      <div className="card st"><i className="b3">❓</i><b>{d.q}</b><span>إجمالي الأسئلة</span></div><div className="card st"><i className="b4">🎯</i><b>{d.avg}%</b><span>متوسط الدرجات</span></div></div>
+    {d.pending > 0 && <Link to="/admin/grading" className="card alert">✅ لديك {d.pending} تسليم بانتظار التصحيح — اضغط للتصحيح</Link>}
+    <div className="two"><div className="card"><h3>تطور أداء الطلاب (متوسط % لكل واجب)</h3><LineChart data={d.chart} /></div>
+      <div className="card"><h3>أحدث الواجبات</h3>{d.last.map(a => <div key={a.id} className="row lrow2"><div><b>{a.title}</b><div className="muted">{a.lessons?.title}</div></div><span className={'pill ' + (a.is_open ? 'g' : 'r')}>{a.is_open ? 'مفتوح' : 'مغلق'}</span></div>)}<Link className="link" to="/admin/assignments">عرض كل الواجبات</Link></div></div></div>
 }

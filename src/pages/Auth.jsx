@@ -16,7 +16,7 @@ export default function Auth() {
   return <form className="card auth" onSubmit={go}>
     <h2>{mode === 'in' ? 'تسجيل الدخول' : 'إنشاء حساب طالب'}</h2>
     {mode === 'up' && <label>الاسم<input required value={f.name} onChange={set('name')} /></label>}
-    <label>{mode === 'in' ? 'رقم الهاتف أو البريد' : 'رقم الهاتف'}<input required inputMode={mode === 'up' ? 'tel' : 'text'} dir="ltr" value={f.id} onChange={set('id')} /></label>
+    <label>{mode === 'in' ? 'رقم الهاتف أو البريد' : 'رقم الهاتف (أو البريد)'}<input required dir="ltr" value={f.id} onChange={set('id')} /></label>
     <label>كلمة المرور<input required type="password" minLength={6} dir="ltr" value={f.pw} onChange={set('pw')} /></label>
     {err && <p className="err">{err}</p>}
     <button className="btn" disabled={busy}>{busy ? '…' : mode === 'in' ? 'دخول' : 'تسجيل'}</button>

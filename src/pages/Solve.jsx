@@ -4,10 +4,11 @@ import { sb } from '../lib/supabase'
 export default function Solve() {
   const { id } = useParams(), nav = useNavigate()
   const [att, setAtt] = useState(null), [qs, setQs] = useState([]), [ans, setAns] = useState({}), [i, setI] = useState(0)
-  const [err, setErr] = useState(''), [confirm, setConfirm] = useState(false), [res, setRes] = useState(null), [saved, setSaved] = useState('')
+  const [auto, setAuto] = useState(true), [err, setErr] = useState(''), [confirm, setConfirm] = useState(false), [res, setRes] = useState(null), [saved, setSaved] = useState('')
   const dirty = useRef(new Set()), ansRef = useRef({}), timer = useRef()
   const lk = a => `ans:${a}`
   useEffect(() => { (async () => {
+    sb.from('assignments').select('auto_grade').eq('id', id).single().then(({ data }) => data && setAuto(data.auto_grade))
     const { data: a, error } = await sb.rpc('start_attempt', { p_assignment: id }); if (error) return setErr(error.message)
     const [{ data: q }, { data: sa }] = await Promise.all([sb.rpc('get_attempt_questions', { p_attempt: a }), sb.from('student_answers').select('question_id,answer').eq('attempt_id', a)])
     const m = {}; (sa || []).forEach(r => { if (r.answer != null) m[r.question_id] = r.answer })
@@ -31,9 +32,10 @@ export default function Solve() {
   }
   if (err) return <div className="wrap"><div className="card err">{err}</div><button className="btn" onClick={() => nav('/dashboard')}>رجوع</button></div>
   if (res) return <div className="wrap"><div className="card result"><h2>✅ تم تسليم الواجب بنجاح</h2>
-    <div className="big">{Math.round(res.score * 100) / 100} / {Math.round(res.max_score * 100) / 100}</div><p>الدرجة الأولية</p>
-    {res.pending_count > 0 && <p className="muted">يوجد {Math.round(res.pending_marks * 100) / 100} درجة في انتظار مراجعة المدرس</p>}
-    <button className="btn" onClick={() => nav('/dashboard')}>العودة لواجباتي</button></div></div>
+    {auto ? <><div className="big">{+res.score.toFixed(2)} / {+res.max_score.toFixed(2)}</div><p>الدرجة الأولية</p>
+      {res.pending_count > 0 && <p className="muted">يوجد {+res.pending_marks.toFixed(2)} درجة في انتظار مراجعة المدرس</p>}
+      <button className="btn" onClick={() => nav(`/review/${res.id}`)}>عرض إجاباتي وأخطائي</button></> : <p>سيقوم المدرس بتصحيح الواجب، وستظهر لك النتيجة كاملة هنا بمجرد الانتهاء.</p>}
+    <button className="btn ghost" onClick={() => nav('/dashboard')}>العودة لواجباتي</button></div></div>
   if (!qs.length) return <div className="center">جارٍ التحميل…</div>
   const q = qs[i], v = ans[q.id], has = x => x != null && x !== '' && !(Array.isArray(x) && !x.length), unans = qs.filter(x => !has(ans[x.id])).length
   const toggle = k => { const c = Array.isArray(v) ? v : []; setA(q.id, c.includes(k) ? c.filter(x => x !== k) : [...c, k]) }

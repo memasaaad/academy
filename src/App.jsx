@@ -5,6 +5,7 @@ import Auth from './pages/Auth'
 import Dashboard from './pages/Dashboard'
 import Solve from './pages/Solve'
 import Admin from './pages/admin/Admin'
+import Review from './pages/Review'
 export const BRAND = 'اكاديمية المهندس إبراهيم سعد'
 function Shell() {
   const { profile, isAdmin, signOut } = useAuth()
@@ -12,7 +13,8 @@ function Shell() {
     <header className="top"><Link to="/" className="brand"><span className="logo">{'</>'}</span>{BRAND}</Link>
       <nav>{profile ? <>{isAdmin ? <Link to="/admin">لوحة المدرس</Link> : <Link to="/dashboard">واجباتي</Link>}<button className="link" onClick={signOut}>خروج</button></> : <Link to="/auth">دخول</Link>}</nav></header>
     <main><Outlet /></main>
-    <footer>جميع الحقوق محفوظة - Eng. Ibrahim Saad</footer></div>
+    <footer>جميع الحقوق محفوظة - Eng. Ibrahim Saad</footer>
+    {profile && !isAdmin && <nav className="bnav"><Link to="/">🏠<span>الرئيسية</span></Link><Link to="/dashboard">📝<span>واجباتي</span></Link><button onClick={signOut}>🚪<span>خروج</span></button></nav>}</div>
 }
 const Guard = ({ admin, children }) => {
   const { session, isAdmin, loading } = useAuth()
@@ -26,6 +28,7 @@ export default function App() {
     <Route index element={<Home />} /><Route path="auth" element={<Auth />} />
     <Route path="dashboard" element={<Guard><Dashboard /></Guard>} />
     <Route path="solve/:id" element={<Guard><Solve /></Guard>} />
-    <Route path="admin/*" element={<Guard admin><Admin /></Guard>} />
-    <Route path="*" element={<Navigate to="/" />} /></Route></Routes>
+    <Route path="review/:id" element={<Guard><Review /></Guard>} />
+    <Route path="*" element={<Navigate to="/" />} /></Route>
+    <Route path="admin/*" element={<Guard admin><Admin /></Guard>} /></Routes>
 }
