@@ -6,7 +6,7 @@ import { useTheme } from '../lib/theme'
 import { useAsync } from '../components/ui'
 import NotificationBell from '../components/NotificationBell'
 import { ResourceList } from '../components/Resources'
-import mark from '../assets/mark.png'
+import mark from '../pub/mark.webp'
 import art from '../pub/homeArt'
 import '../pub/home.css'
 const ICONS = { 0: 'M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 3v4M17 5h4', 1: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z M9 12l2 2 4-4', 2: 'M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18 M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18', 3: 'M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16' }
