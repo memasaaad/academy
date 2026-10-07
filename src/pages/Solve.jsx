@@ -26,7 +26,7 @@ export default function Solve() {
   const dirty = useRef(new Set()), ansRef = useRef({}), timer = useRef(), lk = a => `ans:${a}`
   const load = async () => {
     setErr('')
-    const { data: m } = await sb.from('assignments').select('title,auto_grade,ends_at,lessons(title)').eq('id', id).single(); if (m) setMeta({ title: m.title, auto: m.auto_grade, ends: m.ends_at, lesson: m.lessons?.title || '' })
+    const { data: m } = await sb.from('assignments').select('title,auto_grade,ends_at,lessons(title),chapters(title)').eq('id', id).single(); if (m) setMeta({ title: m.title, auto: m.auto_grade, ends: m.ends_at, lesson: m.lessons?.title || m.chapters?.title || '' })
     const { data: a, error } = await sb.rpc('start_attempt', { p_assignment: id }); if (error) return setErr(friendly(error))
     const [{ data: q }, { data: sa }, { data: at }] = await Promise.all([sb.rpc('get_attempt_questions', { p_attempt: a }), sb.from('student_answers').select('question_id,answer').eq('attempt_id', a), sb.from('attempts').select('started_at').eq('id', a).single()])
     const mm = {}; (sa || []).forEach(r => { if (r.answer != null) mm[r.question_id] = r.answer })

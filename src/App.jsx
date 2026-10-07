@@ -1,5 +1,5 @@
 import { Link, NavLink, Navigate, Outlet, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
-import { ClipboardList, Home as HomeI, LogOut, Trophy, User, LayoutDashboard } from 'lucide-react'
+import { BookOpen, ClipboardList, Home as HomeI, Layers, LogOut, Trophy, User, LayoutDashboard } from 'lucide-react'
 import { useAuth } from './lib/auth'
 import { BRAND } from './lib/brand'
 import mark from './assets/mark.png'
@@ -13,10 +13,11 @@ import Solve from './pages/Solve'
 import Review from './pages/Review'
 import Admin from './pages/admin/Admin'
 import Pending from './pages/Pending'
+import { Learn, TrackView, TracksHome } from './pages/Tracks'
 export const Brand = ({ to = '/', sub }) => <Link to={to} className="brand"><img className="mark" src={mark} alt="" width="38" height="38" /><span><b>{BRAND}</b>{sub && <small>{sub}</small>}</span></Link>
 function Shell() {
   const { profile, isAdmin, signOut } = useAuth(), nav = useNavigate(), student = profile && !isAdmin, home = useLocation().pathname === '/'
-  const links = [['/dashboard', 'الرئيسية', HomeI], ['/assignments', 'الواجبات', ClipboardList], ['/results', 'النتائج', Trophy]]
+  const links = [['/dashboard', 'الرئيسية', HomeI], ['/learn', 'المنهج', BookOpen], ['/tracks', 'المسارات', Layers], ['/assignments', 'الواجبات', ClipboardList], ['/results', 'النتائج', Trophy]]
   return <>
     <header className={'topbar' + (home ? ' dark' : '')}><div className="in"><Brand />
       {student && <nav className="tnav" aria-label="التنقل الرئيسي">{links.map(([to, t]) => <NavLink key={to} to={to}>{t}</NavLink>)}</nav>}
@@ -27,7 +28,7 @@ function Shell() {
         : <div className="row"><Link className={'btn sm hide-m ' + (home ? 'outline' : 'secondary')} to="/auth?mode=up">إنشاء حساب</Link><Link className={'btn sm ' + (home ? 'white' : '')} to="/auth">تسجيل الدخول</Link></div>}</div></header>
     <main><Outlet /></main>
     <footer className="foot">جميع الحقوق محفوظة - Eng. Ibrahim Saad</footer>
-    {student && <nav className="bnav" aria-label="التنقل السفلي">{[...links, ['/account', 'حسابي', User]].map(([to, t, I]) => <NavLink key={to} to={to}><I size={22} className="i" />{t}</NavLink>)}</nav>}</>
+    {student && <nav className="bnav" aria-label="التنقل السفلي">{[...links.slice(0, 4), ['/account', 'حسابي', User]].map(([to, t, I]) => <NavLink key={to} to={to}><I size={22} className="i" />{t}</NavLink>)}</nav>}</>
 }
 const Guard = ({ admin, children }) => {
   const { session, isAdmin, loading, profile } = useAuth()
@@ -48,7 +49,7 @@ export default function App() {
     <Route path="solve/:id" element={<Guard><Solve /></Guard>} />
     <Route element={<Shell />}>
       <Route path="dashboard" element={<Guard><StudentHome /></Guard>} /><Route path="assignments" element={<Guard><Assignments /></Guard>} />
-      <Route path="results" element={<Guard><Results /></Guard>} /><Route path="account" element={<Guard><Account /></Guard>} />
+      <Route path="learn" element={<Guard><Learn /></Guard>} /><Route path="tracks" element={<Guard><TracksHome /></Guard>} /><Route path="tracks/:id" element={<Guard><TrackView /></Guard>} /><Route path="results" element={<Guard><Results /></Guard>} /><Route path="account" element={<Guard><Account /></Guard>} />
       <Route path="review/:id" element={<Guard><Review /></Guard>} /><Route path="*" element={<Navigate to="/" />} /></Route>
     <Route path="admin/*" element={<Guard admin><Admin /></Guard>} /></Routes>
 }

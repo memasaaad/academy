@@ -16,7 +16,7 @@ export default function Home() {
   const { session, profile, isAdmin, signOut } = useAuth(), { toggle } = useTheme(), nav = useNavigate(), [cur, setCur] = useState(0), [open, setOpen] = useState(null)
   const ok = session && profile && (isAdmin || profile.active)
   const { data } = useAsync(async () => {
-    const c = await sb.from('chapters').select('*, lessons(*)').order('position'); const chs = (c.data || []).map(x => ({ ...x, lessons: x.lessons.sort((p, q) => p.position - q.position) }))
+    const c = await sb.from('chapters').select('*, lessons(*)').is('track_id', null).order('position'); const chs = (c.data || []).map(x => ({ ...x, lessons: x.lessons.sort((p, q) => p.position - q.position) }))
     if (!ok) return { chs, asg: [], res: [] }
     const [a, r] = await Promise.all([sb.from('assignments').select('id,title,lesson_id').eq('is_open', true), sb.from('lesson_resources').select('*').eq('active', true).order('position')])
     return { chs, asg: a.data || [], res: r.data || [] } }, [ok])

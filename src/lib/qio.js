@@ -18,7 +18,7 @@ export async function importQuestions(list, onProgress = () => {}, cfg = {}) {
   for (let i = 0; i < list.length; i++) {
     const q = list[i]
     const forced = cfg.lessonId ? lessons.find(l => l.id === cfg.lessonId) : null
-    let ch = forced ? chapters.find(c => c.id === forced.chapter_id) : chapters.find(c => key(c.title) === key(q.chapter))
+    let ch = forced ? chapters.find(c => c.id === forced.chapter_id) : chapters.find(c => !c.track_id && key(c.title) === key(q.chapter))
     if (!ch) { const { data } = await sb.from('chapters').insert({ title: q.chapter, position: chapters.length + 1 }).select().single(); ch = data; chapters.push(ch) }
     let ls = forced || lessons.find(l => l.chapter_id === ch.id && key(l.title) === key(q.lesson))
     if (!ls) { const { data } = await sb.from('lessons').insert({ chapter_id: ch.id, title: q.lesson, position: lessons.filter(l => l.chapter_id === ch.id).length + 1 }).select().single(); ls = data; lessons.push(ls) }
