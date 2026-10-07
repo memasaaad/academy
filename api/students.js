@@ -12,9 +12,16 @@ export default async function handler(req, res) {
       const { full_name, phone, password } = req.body || {}
       if (!full_name || !phone || !password || password.length < 6) return res.status(400).json({ error: 'بيانات ناقصة (كلمة المرور 6 أحرف على الأقل)' })
       const email = `${String(phone).replace(/\D/g, '')}@students.academy.local`
-      const { data, error } = await admin.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { full_name, phone } })
+      const { data, error } = await admin.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { full_name, phone, by_admin: '1' } })
       if (error) return res.status(400).json({ error: error.message })
+      await admin.from('profiles').update({ active: true }).eq('id', data.user.id)   // الطالب الذي يضيفه المدرس يكون مفعّلًا
       return res.json({ id: data.user.id })
+    }
+    if (req.method === 'PATCH') {   // تغيير كلمة مرور طالب
+      const { id, password } = req.body || {}
+      if (!id || !password || password.length < 6) return res.status(400).json({ error: 'كلمة المرور 6 أحرف على الأقل' })
+      const { error } = await admin.auth.admin.updateUserById(id, { password })
+      return error ? res.status(400).json({ error: error.message }) : res.json({ ok: true })
     }
     if (req.method === 'DELETE') {
       const { id } = req.body || {}

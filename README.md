@@ -4,7 +4,7 @@ React + Vite + Supabase (Auth / PostgreSQL / Storage) — جاهز للنشر ع
 
 ## 1) Supabase (مشروع جديد خاص بك، بدل Lovable Cloud)
 1. أنشئ مشروعًا على supabase.com.
-2. SQL Editor ← شغّل بالترتيب: `supabase/migrations/001_schema.sql` ثم `002_review_notify.sql` (إشعارات المدرس + مراجعة الحل)، ثم `003_student_notifications_uploads.sql` (إشعارات الطالب + رفع صور إجابات المقالي في bucket خاص `answer-images`). (ينشئ الجداول + RLS + الدوال + bucket الصور + فصول ودروس الكتاب الـ 4 فصول/14 درس).
+2. SQL Editor ← شغّل بالترتيب: `supabase/migrations/001_schema.sql` ثم `002_review_notify.sql` (إشعارات المدرس + مراجعة الحل)، ثم `003_student_notifications_uploads.sql` (إشعارات الطالب + رفع صور إجابات المقالي)، ثم `004_activation_resources.sql` (تفعيل الحسابات من المدرس + ملفات وفيديوهات شرح الدروس). (ينشئ الجداول + RLS + الدوال + bucket الصور + فصول ودروس الكتاب الـ 4 فصول/14 درس).
 3. Authentication ← Providers ← Email ← **أوقف "Confirm email"** (الطلاب يسجلون برقم الهاتف).
 4. Project Settings ← API: انسخ `URL` و `publishable/anon key` و `service_role key`.
 
@@ -48,3 +48,11 @@ SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... ADMIN_EMAIL=you@mail.com ADMIN_PA
 
 ## الوضع الليلي
 زر القمر/الشمس في كل الصفحات. الاختيار يُحفظ في المتصفح، والافتراضي يتبع إعداد الجهاز.
+
+## تفعيل الطلاب وكلمات المرور
+- أي حساب جديد يسجله الطالب بنفسه يكون **غير مفعّل** ويصلك إشعار؛ فعّله من لوحة المدرس ← الطلاب.
+- الطالب الذي تضيفه أنت يكون مفعّلًا مباشرة. الحسابات الموجودة قبل التحديث تبقى مفعّلة.
+- تغيير كلمة مرور أي طالب من زر المفتاح في صفحة الطلاب (يحتاج `SUPABASE_SERVICE_ROLE_KEY` على Vercel).
+
+## شرح الدروس
+لوحة المدرس ← الفصول والدروس ← زر «الشرح» بجانب كل درس: ارفع فيديو/PDF/Word/PowerPoint أو ضع رابط (يوتيوب غير مدرج / Drive / Vimeo). يظهر للطلاب المفعّلين داخل الدرس في الصفحة الرئيسية. حجم الملف المسموح يحدده مشروع Supabase (غالبًا 50MB)؛ للفيديوهات الكبيرة استخدم رابط يوتيوب.

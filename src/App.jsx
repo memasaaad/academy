@@ -12,6 +12,7 @@ import { StudentHome, Assignments, Results, Account } from './pages/Student'
 import Solve from './pages/Solve'
 import Review from './pages/Review'
 import Admin from './pages/admin/Admin'
+import Pending from './pages/Pending'
 export const Brand = ({ to = '/', sub }) => <Link to={to} className="brand"><img className="mark" src={mark} alt="" width="38" height="38" /><span><b>{BRAND}</b>{sub && <small>{sub}</small>}</span></Link>
 function Shell() {
   const { profile, isAdmin, signOut } = useAuth(), nav = useNavigate(), student = profile && !isAdmin, home = useLocation().pathname === '/'
@@ -29,18 +30,23 @@ function Shell() {
     {student && <nav className="bnav" aria-label="التنقل السفلي">{[...links, ['/account', 'حسابي', User]].map(([to, t, I]) => <NavLink key={to} to={to}><I size={22} className="i" />{t}</NavLink>)}</nav>}</>
 }
 const Guard = ({ admin, children }) => {
-  const { session, isAdmin, loading } = useAuth()
+  const { session, isAdmin, loading, profile } = useAuth()
   if (loading) return <div className="page"><PageSkeleton /></div>
   if (!session) return <Navigate to="/auth" replace />
   if (admin && !isAdmin) return <Navigate to="/dashboard" replace />
+  if (!isAdmin && profile && !profile.active) return <Pending />
   return children
+}
+function RoleRedirect() {
+  const { session, profile, loading, isAdmin } = useAuth()
+  if (loading || (session && !profile)) return <div className="page"><PageSkeleton /></div>
+  return <Navigate to={!session ? '/auth' : isAdmin ? '/admin' : '/dashboard'} replace />
 }
 export default function App() {
   return <Routes>
-    <Route path="auth" element={<Auth />} />
+    <Route index element={<Home />} /><Route path="auth" element={<Auth />} /><Route path="go" element={<RoleRedirect />} />
     <Route path="solve/:id" element={<Guard><Solve /></Guard>} />
     <Route element={<Shell />}>
-      <Route index element={<Home />} />
       <Route path="dashboard" element={<Guard><StudentHome /></Guard>} /><Route path="assignments" element={<Guard><Assignments /></Guard>} />
       <Route path="results" element={<Guard><Results /></Guard>} /><Route path="account" element={<Guard><Account /></Guard>} />
       <Route path="review/:id" element={<Guard><Review /></Guard>} /><Route path="*" element={<Navigate to="/" />} /></Route>

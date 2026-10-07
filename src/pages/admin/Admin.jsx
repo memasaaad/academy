@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
-import { X, BarChart3, BookOpen, ClipboardList, FileQuestion, FileUp, GraduationCap, LayoutDashboard, LogOut, Menu as MenuI, PenLine, Trophy, Users } from 'lucide-react'
+import { Link, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import { Home, X, BarChart3, BookOpen, ClipboardList, FileQuestion, FileUp, GraduationCap, LayoutDashboard, LogOut, Menu as MenuI, PenLine, Trophy, Users } from 'lucide-react'
 import { sb } from '../../lib/supabase'
 import { useAuth } from '../../lib/auth'
 import { Brand } from '../../App'
@@ -26,6 +26,7 @@ export default function Admin() {
   return <div className="adm"><div className={'scrim' + (m ? ' show' : '')} onClick={() => setM(false)} />
     <aside className={'side' + (m ? ' open' : '')} aria-label="القائمة الرئيسية"><div className="sdrawer-head"><Brand to="/admin" /><IconBtn icon={X} label="إغلاق القائمة" style={{ background: 'transparent', color: '#fff', borderColor: '#ffffff30' }} onClick={() => setM(false)} /></div><div className="sbrand-d"><Brand to="/admin" /></div>
       <nav>{groups.map(([g, l]) => <div key={g}>{g && <div className="grp">{g}</div>}{l.map(([p, I, t]) => <NavLink key={p} end={p === ''} to={`/admin/${p}`} className="nl"><I size={19} className="i" />{t}</NavLink>)}</div>)}</nav>
+      <Link to="/" className="nl" style={{ marginTop: 12, borderTop: '1px solid #ffffff1a', borderRadius: 0, paddingTop: 14 }}><Home size={19} className="i" />الصفحة الرئيسية للموقع</Link>
       <div className="me"><Avatar name="إ" /><div className="grow"><b>م/ إبراهيم سعد</b><div className="small" style={{ color: '#94a3b8' }}>مدرس</div></div><IconBtn icon={LogOut} label="تسجيل الخروج" style={{ background: 'transparent', color: '#fff', borderColor: '#ffffff30' }} onClick={async () => { await signOut(); go('/') }} /></div></aside>
     <section className="admain"><header className="ahead"><IconBtn className="burger" icon={MenuI} label="فتح القائمة" onClick={() => setM(true)} /><div><div className="crumb">لوحة المدرس</div><h2>{titles[seg] || 'الرئيسية'}</h2></div><span className="sp" />
       <form className="search" onSubmit={e => { e.preventDefault(); go(`/admin/questions?q=${encodeURIComponent(q)}`) }}><SearchInput value={q} onChange={setQ} placeholder="ابحث في بنك الأسئلة…" /></form><ThemeToggle /><NotificationBell admin />

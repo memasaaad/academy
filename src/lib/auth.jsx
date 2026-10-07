@@ -19,6 +19,6 @@ export function AuthProvider({ children }) {
   const value = { session, profile, loading, isAdmin: profile?.role === 'admin',
     signIn: (id, password) => sb.auth.signInWithPassword({ email: toEmail(id), password }),
     signUp: (full_name, phone, password) => sb.auth.signUp({ email: toEmail(phone), password, options: { data: { full_name, phone } } }),
-    signOut: () => sb.auth.signOut() }
+    signOut: () => sb.auth.signOut(), refresh: () => sb.auth.getSession().then(({ data }) => load(data.session)) }
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }
