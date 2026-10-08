@@ -1,6 +1,10 @@
 import { Link, useNavigate } from 'react-router-dom'
 import CurriculumBrowser from '../components/CurriculumBrowser'
-import { Layers } from 'lucide-react'
+import { BarChart3, Layers } from 'lucide-react'
+import { RemindersBanner } from '../components/Reminders'
+import { DashboardAnnouncements } from '../components/Announcements'
+import InstallApp from '../components/InstallApp'
+import { deadlineInfo } from '../lib/deadline'
 import { useState } from 'react'
 import { Calendar, CheckCircle2, ClipboardList, Clock, Code2, Eye, FileQuestion, Hourglass, LogOut, Play, Target, Trophy } from 'lucide-react'
 import { sb } from '../lib/supabase'
@@ -31,7 +35,7 @@ export function AssignmentCard({ a, d }) {
   const canStart = (label === 'متاح' || label === 'قيد الحل')
   return <article className="acard"><span className="ic" aria-hidden><ClipboardList size={21} className="i" /></span>
     <div className="grow"><div className="row wrapx"><h4>{a.title}</h4><Badge tone={tone} icon={Ic}>{label}</Badge></div><p className="muted small">{a.lessons?.title || a.chapters?.title}</p>
-      <div className="meta"><span><FileQuestion className="i" />{a.assignment_questions?.[0]?.count ?? 0} سؤال</span><span><Calendar className="i" />يبدأ {fdate(a.starts_at)}</span><span><Clock className="i" />ينتهي {fdate(a.ends_at)}</span></div></div>
+      <div className="meta"><span><FileQuestion className="i" />{a.assignment_questions?.[0]?.count ?? 0} سؤال</span><span><Calendar className="i" />يبدأ {fdate(a.starts_at)}</span><span><Clock className="i" />ينتهي {fdate(a.ends_at)}</span></div>{(() => { const i = canStart && deadlineInfo(a.ends_at); return i && i.level > 0 ? <p style={{ marginTop: 8 }}><span className={'dl ' + i.tone}>{i.text}</span></p> : null })()}</div>
     <div className="act">{canStart ? <Link className="btn" to={`/solve/${a.id}`}>{live ? 'متابعة الحل' : 'ابدأ الواجب'}</Link> : fin && (fin.status === 'graded' || a.auto_grade) ? <Link className="btn secondary" to={`/review/${fin.id}`}><Eye size={17} className="i" />مراجعة الحل</Link> : null}</div></article>
 }
 function ResultRow({ t }) {
@@ -44,14 +48,16 @@ const Wrap = ({ r, children }) => r.loading ? <PageSkeleton /> : r.error ? <Erro
 function AvailCard({ a, d }) {
   const [label, tone, Ic] = statusOf(a, d), live = label === 'قيد الحل'
   return <article className="vcard"><div className="top"><Badge tone={tone} icon={Ic}>{label}</Badge><span className="ic" style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--c-primary-soft)', color: 'var(--c-primary)', display: 'grid', placeItems: 'center' }}><ClipboardList size={18} className="i" /></span></div>
-    <h4>{a.title}</h4><p className="muted small">{a.lessons?.title || a.chapters?.title}</p><div className="meta"><span><FileQuestion className="i" />{a.assignment_questions?.[0]?.count ?? 0} سؤال</span><span><Clock className="i" />ينتهي {fdate(a.ends_at)}</span></div>
+    <h4>{a.title}</h4><p className="muted small">{a.lessons?.title || a.chapters?.title}</p><div className="meta"><span><FileQuestion className="i" />{a.assignment_questions?.[0]?.count ?? 0} سؤال</span><span><Clock className="i" />ينتهي {fdate(a.ends_at)}</span></div>{(() => { const i = deadlineInfo(a.ends_at); return i && i.level > 0 ? <p><span className={'dl ' + i.tone}>{i.text}</span></p> : null })()}
     <Link className="btn" to={`/solve/${a.id}`}>{live ? 'متابعة الحل' : 'ابدأ'}</Link></article>
 }
 export function StudentHome() {
   const { profile } = useAuth(), r = useStudent()
   return <div className="page"><div className="pagehead"><div><h1>أهلًا، {profile?.full_name?.split(' ')[0] || ''} 👋</h1><p>جاهز تكمل رحلتك؟</p></div></div>
+    <RemindersBanner /><DashboardAnnouncements />
     <Wrap r={r}>{d => <>
       <div className="kpis">{[[CheckCircle2, 'الواجبات المكتملة', d.done.length, 'g'], [Hourglass, 'قيد المراجعة', d.waiting, 'o'], [ClipboardList, 'الواجبات المتاحة', d.avail.length, 'i'], [Target, 'متوسط الدرجات', d.avg != null ? d.avg + '%' : '—', 'p']].map(([I, l, v, c]) => <div key={l} className="kpi"><span className={'ic ' + c}><I size={22} className="i" /></span><div><span>{l}</span><b>{v}</b></div></div>)}</div>
+      <Link to="/performance" className="card row" style={{ textDecoration: 'none', gap: 14, marginTop: 16 }}><span className="tile" style={{ background: 'var(--c-primary-soft)', color: 'var(--c-primary)', marginBottom: 0 }}><BarChart3 size={24} className="i" /></span><div className="grow"><b>أدائي</b><p className="muted small">اعرف أقوى موضوعاتك وما يحتاج مراجعة، وتدرّب عليه مباشرة.</p></div><span className="btn secondary sm">عرض التحليل</span></Link>
       <div className="sechead"><h2>متابعة التعلم</h2></div>
       {d.prog ? <section className="cont" aria-label="متابعة الحل"><div className="row" style={{ alignItems: 'flex-start' }}><span className="tile" aria-hidden><Code2 size={26} className="i" /></span><div className="grow"><h3 style={{ margin: 0, fontSize: '1.1rem' }}>{d.prog.assignments?.title}</h3><p className="muted small">{d.prog.assignments?.lessons?.title || d.prog.assignments?.chapters?.title}</p>
         <div className="row" style={{ marginTop: 10 }}><div className="grow"><Progress value={pct(d.answered, d.total)} /></div><span className="small muted">{d.answered} / {d.total}</span></div></div></div><Link className="btn lg" to={`/solve/${d.prog.assignment_id}`}>متابعة الحل</Link></section>
@@ -80,5 +86,5 @@ export function Results() {
 }
 export function Account() {
   const { profile, signOut } = useAuth(), nav = useNavigate()
-  return <div className="page narrow"><PageHeader title="حسابي" /><div className="card"><div className="row"><span className="avatar" style={{ width: 52, height: 52 }}>{profile?.full_name?.[0]}</span><div><b>{profile?.full_name}</b><p className="muted small ltr">{profile?.phone || '—'}</p></div></div></div><Btn variant="secondary" icon={LogOut} onClick={async () => { await signOut(); nav('/') }}>تسجيل الخروج</Btn></div>
+  return <div className="page narrow"><PageHeader title="حسابي" /><div className="card"><div className="row"><span className="avatar" style={{ width: 52, height: 52 }}>{profile?.full_name?.[0]}</span><div><b>{profile?.full_name}</b><p className="muted small ltr">{profile?.phone || '—'}</p></div></div></div><InstallApp /><Btn variant="secondary" icon={LogOut} onClick={async () => { await signOut(); nav('/') }}>تسجيل الخروج</Btn></div>
 }

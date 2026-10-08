@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Check, ChevronDown, ClipboardList, GraduationCap } from 'lucide-react'
+import { Check, ChevronDown, ClipboardList, Dumbbell, GraduationCap } from 'lucide-react'
 import { sb } from '../lib/supabase'
 import { Badge, EmptyState, ErrorState, PageSkeleton, Progress, friendly, pct, useAsync, useUi } from './ui'
 import { ResourceList } from './Resources'
+import { AnnList } from './Announcements'
 import './tracks.css'
 export function Note({ text }) {
   return <div className="cb-note">{(text || '').split('```').map((p, i) => i % 2 ? <pre key={i} className="cb-code">{p.replace(/^\w*\n/, '').replace(/\n$/, '')}</pre> : p.trim() ? <p key={i}>{p.trim()}</p> : null)}</div>
@@ -12,11 +13,11 @@ export async function loadCurriculum(trackId) {
   let q = sb.from('chapters').select('*, lessons(*)').order('position'); q = trackId ? q.eq('track_id', trackId) : q.is('track_id', null)
   const c = await q; if (c.error) throw c.error
   const chs = (c.data || []).filter(x => x.active).map(x => ({ ...x, lessons: x.lessons.filter(l => l.active).sort((p, q) => p.position - q.position) })), ids = chs.flatMap(x => x.lessons.map(l => l.id))
-  if (!chs.length) return { chs, asg: [], res: [], notes: {}, done: new Set(), att: [] }
-  const [a, r, n, p, t] = await Promise.all([sb.from('assignments').select('id,title,lesson_id,chapter_id,starts_at,ends_at,auto_grade').eq('is_open', true), ids.length ? sb.from('lesson_resources').select('*').eq('active', true).in('lesson_id', ids).order('position') : { data: [] },
-    ids.length ? sb.from('lesson_notes').select('lesson_id,body').in('lesson_id', ids) : { data: [] }, ids.length ? sb.from('lesson_progress').select('lesson_id').in('lesson_id', ids) : { data: [] }, sb.from('attempts').select('id,assignment_id,status')])
+  if (!chs.length) return { chs, asg: [], res: [], notes: {}, done: new Set(), att: [], cnt: {}, ann: [] }
+  const [a, r, n, p, t, k, an] = await Promise.all([sb.from('assignments').select('id,title,lesson_id,chapter_id,starts_at,ends_at,auto_grade').eq('is_open', true), ids.length ? sb.from('lesson_resources').select('*').eq('active', true).in('lesson_id', ids).order('position') : { data: [] },
+    ids.length ? sb.from('lesson_notes').select('lesson_id,body').in('lesson_id', ids) : { data: [] }, ids.length ? sb.from('lesson_progress').select('lesson_id').in('lesson_id', ids) : { data: [] }, sb.from('attempts').select('id,assignment_id,status'), ids.length ? sb.rpc('lesson_question_counts', { p_ids: ids }) : { data: [] }, sb.from('announcements').select('*').order('created_at', { ascending: false }).limit(100)])
   const cids = new Set(chs.map(x => x.id)), lids = new Set(ids)
-  return { chs, asg: (a.data || []).filter(x => lids.has(x.lesson_id) || (!x.lesson_id && cids.has(x.chapter_id))), res: r.data || [], notes: Object.fromEntries((n.data || []).map(x => [x.lesson_id, x.body])), done: new Set((p.data || []).map(x => x.lesson_id)), att: t.data || [] }
+  return { chs, asg: (a.data || []).filter(x => lids.has(x.lesson_id) || (!x.lesson_id && cids.has(x.chapter_id))), res: r.data || [], notes: Object.fromEntries((n.data || []).map(x => [x.lesson_id, x.body])), done: new Set((p.data || []).map(x => x.lesson_id)), att: t.data || [], cnt: Object.fromEntries((k.data || []).map(x => [x.lesson_id, Number(x.n)])), ann: (an.data || []).filter(x => cids.has(x.chapter_id) || lids.has(x.lesson_id)) }
 }
 function Asg({ a, att }) {
   const mine = att.filter(x => x.assignment_id === a.id), live = mine.find(x => x.status === 'in_progress'), fin = mine.find(x => x.status !== 'in_progress'), now = Date.now()
@@ -41,11 +42,11 @@ export default function CurriculumBrowser({ trackId = null }) {
         return <div key={l.id} className="cb-part"><button className="cb-prow" aria-expanded={po} onClick={() => setPart(po ? null : l.id)}><span className={'cb-dot' + (dn ? ' on' : '')} aria-label={dn ? 'منتهي' : 'غير منتهي'}>{dn && <Check size={14} className="i" />}</span>
           <span className="grow">{l.title}</span>{l.source_page ? <span className="muted small">ص {l.source_page}</span> : null}<ChevronDown size={16} className="i muted" style={{ transform: po ? 'rotate(180deg)' : '' }} /></button>
           {po && <div className="cb-more">
-            {note && <><h4>الشرح</h4><Note text={note} /></>}
+            <AnnList items={d.ann.filter(x => x.lesson_id === l.id)} />{note && <><h4>الشرح</h4><Note text={note} /></>}
             {res.length > 0 && <><h4>فيديوهات وملفات الشرح</h4><div className="cb-res"><ResourceList items={res} /></div></>}
             {asg.length > 0 && <><h4>الواجبات</h4>{asg.map(a => <Asg key={a.id} a={a} att={d.att} />)}</>}
-            {!note && !res.length && !asg.length && <p className="muted small" style={{ paddingTop: 10 }}>لم يضف المدرس شرحًا أو واجبات لهذا ال{w} بعد.</p>}
-            <div style={{ marginTop: 14 }}><button className={'btn sm ' + (dn ? 'secondary' : 'success')} onClick={() => toggle(l, !dn)}><Check size={16} className="i" />{dn ? `إلغاء علامة الإنهاء` : `أنهيت هذا ال${w}`}</button></div></div>}</div> })}
+            {!note && !res.length && !asg.length && !d.cnt[l.id] && <p className="muted small" style={{ paddingTop: 10 }}>لم يضف المدرس شرحًا أو واجبات لهذا ال{w} بعد.</p>}
+            <div className="row wrapx" style={{ marginTop: 14 }}>{d.cnt[l.id] > 0 && <Link className="btn sm" to={`/practice/${l.id}`}><Dumbbell size={16} className="i" />تدريب ({d.cnt[l.id]} سؤال)</Link>}<button className={'btn sm ' + (dn ? 'secondary' : 'success')} onClick={() => toggle(l, !dn)}><Check size={16} className="i" />{dn ? `إلغاء علامة الإنهاء` : `أنهيت هذا ال${w}`}</button></div></div>}</div> })}
         {!total && <p className="muted small" style={{ padding: 16 }}>لا توجد {trackId ? 'أجزاء' : 'دروس'} في هذا الفصل بعد.</p>}
-        {exams.length > 0 && <div className="cb-exam" style={{ flexDirection: 'column', alignItems: 'stretch' }}><b>امتحان الفصل</b>{exams.map(a => <Asg key={a.id} a={a} att={d.att} />)}</div>}</div>}</section> })}</div>
+        {d.ann.filter(x => x.chapter_id === c.id).length > 0 && <div style={{ padding: '0 var(--s4)' }}><AnnList items={d.ann.filter(x => x.chapter_id === c.id)} /></div>}{exams.length > 0 && <div className="cb-exam" style={{ flexDirection: 'column', alignItems: 'stretch' }}><b>امتحان الفصل</b>{exams.map(a => <Asg key={a.id} a={a} att={d.att} />)}</div>}</div>}</section> })}</div>
 }

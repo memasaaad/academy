@@ -1,8 +1,9 @@
 import { Link, useParams } from 'react-router-dom'
-import { ArrowRight, BookOpen, Layers } from 'lucide-react'
+import { ArrowRight, Award, BookOpen, Layers } from 'lucide-react'
 import { sb } from '../lib/supabase'
 import { EmptyState, ErrorState, PageHeader, PageSkeleton, Progress, pct, useAsync } from '../components/ui'
 import CurriculumBrowser from '../components/CurriculumBrowser'
+import { AnnList, useAnnouncements } from '../components/Announcements'
 import { TrackArt, themeVars } from '../components/TrackArt'
 import '../components/tracks.css'
 async function loadTracks() {
@@ -22,13 +23,13 @@ export function TracksHome() {
       : <EmptyState icon={Layers} title="لا توجد مسارات بعد" text="سيظهر هنا كل مسار برمجة يضيفه المدرس." action={<Link className="btn secondary" to="/learn">اذهب إلى المنهج</Link>} />}</div>
 }
 export function TrackView() {
-  const { id } = useParams(), r = useAsync(async () => { const [t, l] = await Promise.all([sb.from('tracks').select('*').eq('id', id).maybeSingle(), loadTracks()]); if (t.error) throw t.error; return t.data ? l.find(x => x.id === id) || t.data : null }, [id])
+  const an = useAnnouncements(), { id } = useParams(), r = useAsync(async () => { const [t, l] = await Promise.all([sb.from('tracks').select('*').eq('id', id).maybeSingle(), loadTracks()]); if (t.error) throw t.error; return t.data ? l.find(x => x.id === id) || t.data : null }, [id])
   if (r.loading) return <div className="page"><PageSkeleton /></div>; if (r.error) return <div className="page"><ErrorState onRetry={r.reload} /></div>
   const t = r.data
   if (!t) return <div className="page"><EmptyState icon={Layers} title="المسار غير موجود" text="ربما أُخفي أو حُذف." action={<Link className="btn" to="/tracks">كل المسارات</Link>} /></div>
   return <div className="page"><Link className="btn ghost sm" to="/tracks" style={{ marginBottom: 12 }}><ArrowRight size={16} className="i" />كل المسارات</Link>
     <div className="trk-banner" style={themeVars(t.theme)}><TrackArt /><div className="grow"><h1>{t.title}</h1>{t.subtitle && <p>{t.subtitle}</p>}{t.total != null && <><div className="trk-bar"><i style={{ width: pct(t.done, t.total) + '%' }} /></div><div className="trk-pct">{t.done} من {t.total} أجزاء مكتملة</div></>}</div></div>
-    <CurriculumBrowser trackId={id} /></div>
+    {t.total > 0 && t.done === t.total && <Link className="remind" to={`/certificate/${id}`} style={{ background: 'var(--c-success-soft)' }}><Award size={20} className="i" /><b>🎓 أنهيت المسار — اعرض شهادتك</b><span className="btn sm">عرض الشهادة</span></Link>}<AnnList items={(an.data || []).filter(x => x.track_id === id)} /><CurriculumBrowser trackId={id} /></div>
 }
 export function Learn() {
   return <div className="page"><PageHeader title="المنهج الدراسي" desc="فصول ودروس الكتاب: الشرح والواجبات في مكان واحد." /><CurriculumBrowser /></div>

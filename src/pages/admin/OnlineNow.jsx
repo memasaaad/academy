@@ -18,8 +18,8 @@ export function usePresence() {
 }
 export const loginLabel = s => s?.last_login_at ? fdt(s.last_login_at) : 'لم يدخل بعد'
 export function OnlineDot({ on }) { return <span aria-hidden="true" style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: on ? 'var(--c-success)' : 'var(--c-border-2)', boxShadow: on ? '0 0 0 4px color-mix(in srgb,var(--c-success) 25%,transparent)' : 'none', flexShrink: 0 }} /> }
-export default function OnlineNow() {
-  const m = usePresence(), list = Object.values(m).filter(x => x.online).sort((a, b) => new Date(b.last_seen_at) - new Date(a.last_seen_at))
+export default function OnlineNow({ m }) {
+  const list = Object.values(m).filter(x => x.online).sort((a, b) => new Date(b.last_seen_at) - new Date(a.last_seen_at))
   return <div className="card"><div className="row between"><h3 style={{ margin: 0 }}>الطلاب الأونلاين الآن</h3><span className="row"><OnlineDot on={list.length > 0} /><b>{list.length}</b></span></div>
     {list.length ? <div className="row wrapx" style={{ marginTop: 12 }}>{list.map(s => <span key={s.id} className="row" style={{ gap: 8, padding: '6px 12px 6px 6px', border: '1px solid var(--c-border)', borderRadius: 99 }}><Avatar name={s.full_name} /><span className="small"><b>{s.full_name}</b></span></span>)}</div> : <p className="muted small" style={{ marginTop: 8 }}>لا يوجد طلاب متصلون حاليًا.</p>}</div>
 }
