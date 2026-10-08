@@ -34,7 +34,7 @@ export default function Home() {
     <main>
       <section className="p-hero"><div className="p-wrap"><div>
         <span className="p-tag"><svg viewBox="0 0 24 24"><path d="M2 5h7a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H2zM22 5h-7a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h8z" /></svg>الصف الثاني الثانوي / البكالوريا</span>
-        <h1>رحلتك نحو التفوق تبدأ من هنا</h1><p className="p-lead">منصة تعليمية متكاملة لمادة البرمجة وتكنولوجيا المعلومات: واجبات من كتاب الفائز، تصحيح فوري، ومراجعة لأخطائك.</p>
+        <h1>رحلتك نحو التفوق تبدأ من هنا</h1><p className="p-lead">منصة تعليمية متكاملة لمادة البرمجة واﻟﺬﻛﺎء الإﺻﻄﻨﺎعي: واجبات من كتاب الفائز، شرح لمسارات البرمجة من منصة QUREO اليابانية، تصحيح فوري، ومراجعة لأخطائك لمساعدتك على تطوير مستواك خطوة بخطوة.</p>
         <div className="p-cta"><Link className="p-btn p-main" to={session ? dash : '/auth?mode=up'}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round"><path d="M7 4l13 8-13 8z" /></svg>{session ? 'ادخل الآن' : 'ابدأ الآن'}</Link><a className="p-btn p-big" href="#curriculum">استكشف المنهج</a></div></div>
         <div style={{ display: 'contents' }} dangerouslySetInnerHTML={{ __html: art.replace('__MARK__', mark) }} /></div></section>
       <section className="p-cur" id="curriculum"><div className="p-wrap"><h2>استكشف المنهج</h2><p className="p-sub">الوحدات والدروس بترتيب الكتاب.</p>
