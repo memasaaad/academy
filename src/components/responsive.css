@@ -1,0 +1,22 @@
+/* شبكة أمان للريسبونسيف على كل المقاسات (320px ← شاشات 4K) */
+img,svg,video,canvas,iframe{max-width:100%}
+.modal{max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px);overflow:auto}
+.tablew{overflow-x:auto;-webkit-overflow-scrolling:touch}
+@media(max-width:860px){
+  .acontent{padding:var(--s4) var(--s3)}
+  .grid2,.grid3{grid-template-columns:1fr}
+  input,select,textarea{font-size:16px} /* يمنع تكبير الصفحة تلقائيًا على iOS عند الكتابة */
+  .btn{min-height:42px}
+}
+@media(max-width:640px){
+  .topbar .in{gap:6px;padding-inline:10px}
+  .topbar .brand{flex-shrink:1;min-width:0}.topbar .brand>span{min-width:0}
+  .topbar .brand b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+  .topbar .tools{gap:6px}.topbar .iconbtn{width:40px;height:40px}
+  .ahead{gap:6px;padding-inline:10px}.ahead>div{min-width:0}.ahead h2{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .page{padding-inline:var(--s3)}
+  .pagehead{flex-wrap:wrap;gap:var(--s2)}
+}
+@media(max-width:360px){.topbar .brand b{display:none}.acontent{padding-inline:10px}}
+@media(min-width:1600px){.acontent{max-width:1440px}.page{max-width:1240px}.topbar .in{max-width:1560px}}
+@media(min-width:2200px){html{font-size:17px}}

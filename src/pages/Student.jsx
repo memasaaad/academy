@@ -1,4 +1,10 @@
 import { Link, useNavigate } from 'react-router-dom'
+import CurriculumBrowser from '../components/CurriculumBrowser'
+import { BarChart3, Layers } from 'lucide-react'
+import { RemindersBanner } from '../components/Reminders'
+import { DashboardAnnouncements } from '../components/Announcements'
+import InstallApp from '../components/InstallApp'
+import { deadlineInfo } from '../lib/deadline'
 import { useState } from 'react'
 import { Calendar, CheckCircle2, ClipboardList, Clock, Code2, Eye, FileQuestion, Hourglass, LogOut, Play, Target, Trophy } from 'lucide-react'
 import { sb } from '../lib/supabase'
@@ -6,7 +12,7 @@ import { useAuth } from '../lib/auth'
 import { Badge, Btn, EmptyState, ErrorState, PageHeader, PageSkeleton, Progress, Segmented, fdate, grade, nf, pct, useAsync } from '../components/ui'
 function useStudent() {
   return useAsync(async () => {
-    const [a, t] = await Promise.all([sb.from('assignments').select('*, lessons(title), assignment_questions(count)').eq('is_open', true).order('ends_at', { nullsFirst: false }), sb.from('attempts').select('*, assignments(title,auto_grade,lessons(title))').order('started_at', { ascending: false })])
+    const [a, t] = await Promise.all([sb.from('assignments').select('*, lessons(title), chapters(title), assignment_questions(count)').eq('is_open', true).order('ends_at', { nullsFirst: false }), sb.from('attempts').select('*, assignments(title,auto_grade,lessons(title),chapters(title))').order('started_at', { ascending: false })])
     if (a.error || t.error) throw a.error || t.error
     const asg = a.data || [], att = t.data || [], now = Date.now()
     const done = att.filter(x => x.status !== 'in_progress'), doneIds = new Set(done.map(x => x.assignment_id)), prog = att.find(x => x.status === 'in_progress')
@@ -28,13 +34,13 @@ export function AssignmentCard({ a, d }) {
   const [label, tone, Ic] = statusOf(a, d), mine = d.att.filter(x => x.assignment_id === a.id), fin = mine.find(x => x.status !== 'in_progress'), live = mine.find(x => x.status === 'in_progress')
   const canStart = (label === 'متاح' || label === 'قيد الحل')
   return <article className="acard"><span className="ic" aria-hidden><ClipboardList size={21} className="i" /></span>
-    <div className="grow"><div className="row wrapx"><h4>{a.title}</h4><Badge tone={tone} icon={Ic}>{label}</Badge></div><p className="muted small">{a.lessons?.title}</p>
-      <div className="meta"><span><FileQuestion className="i" />{a.assignment_questions?.[0]?.count ?? 0} سؤال</span><span><Calendar className="i" />يبدأ {fdate(a.starts_at)}</span><span><Clock className="i" />ينتهي {fdate(a.ends_at)}</span></div></div>
+    <div className="grow"><div className="row wrapx"><h4>{a.title}</h4><Badge tone={tone} icon={Ic}>{label}</Badge></div><p className="muted small">{a.lessons?.title || a.chapters?.title}</p>
+      <div className="meta"><span><FileQuestion className="i" />{a.assignment_questions?.[0]?.count ?? 0} سؤال</span><span><Calendar className="i" />يبدأ {fdate(a.starts_at)}</span><span><Clock className="i" />ينتهي {fdate(a.ends_at)}</span></div>{(() => { const i = canStart && deadlineInfo(a.ends_at); return i && i.level > 0 ? <p style={{ marginTop: 8 }}><span className={'dl ' + i.tone}>{i.text}</span></p> : null })()}</div>
     <div className="act">{canStart ? <Link className="btn" to={`/solve/${a.id}`}>{live ? 'متابعة الحل' : 'ابدأ الواجب'}</Link> : fin && (fin.status === 'graded' || a.auto_grade) ? <Link className="btn secondary" to={`/review/${fin.id}`}><Eye size={17} className="i" />مراجعة الحل</Link> : null}</div></article>
 }
 function ResultRow({ t }) {
   const p = pct(t.score, t.max_score), show = t.status === 'graded' || t.assignments?.auto_grade
-  return <article className="acard"><span className="ic" aria-hidden><Trophy size={21} className="i" /></span><div className="grow"><h4>{t.assignments?.title}</h4><p className="muted small">{t.assignments?.lessons?.title} · سُلّم {fdate(t.submitted_at)}</p>
+  return <article className="acard"><span className="ic" aria-hidden><Trophy size={21} className="i" /></span><div className="grow"><h4>{t.assignments?.title}</h4><p className="muted small">{t.assignments?.lessons?.title || t.assignments?.chapters?.title} · سُلّم {fdate(t.submitted_at)}</p>
     {show && t.pending_count > 0 && <p className="small" style={{ color: 'var(--c-warning)' }}>{nf(t.pending_marks)} درجة بانتظار مراجعة المدرس</p>}</div>
     <div className="act" style={{ textAlign: 'end' }}>{show ? <><b style={{ fontSize: '1.15rem' }}>{nf(t.score)} / {nf(t.max_score)}</b><div className="row" style={{ justifyContent: 'flex-end', marginBlock: 4 }}><span className="muted small">{p}%</span><Badge tone={p >= 50 ? 'success' : 'danger'}>{grade(p)}</Badge></div><Link className="small" style={{ color: 'var(--c-primary)' }} to={`/review/${t.id}`}>مراجعة الحل والأخطاء</Link></> : <Badge tone="warning" icon={Hourglass}>بانتظار التصحيح</Badge>}</div></article>
 }
@@ -42,18 +48,23 @@ const Wrap = ({ r, children }) => r.loading ? <PageSkeleton /> : r.error ? <Erro
 function AvailCard({ a, d }) {
   const [label, tone, Ic] = statusOf(a, d), live = label === 'قيد الحل'
   return <article className="vcard"><div className="top"><Badge tone={tone} icon={Ic}>{label}</Badge><span className="ic" style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--c-primary-soft)', color: 'var(--c-primary)', display: 'grid', placeItems: 'center' }}><ClipboardList size={18} className="i" /></span></div>
-    <h4>{a.title}</h4><p className="muted small">{a.lessons?.title}</p><div className="meta"><span><FileQuestion className="i" />{a.assignment_questions?.[0]?.count ?? 0} سؤال</span><span><Clock className="i" />ينتهي {fdate(a.ends_at)}</span></div>
+    <h4>{a.title}</h4><p className="muted small">{a.lessons?.title || a.chapters?.title}</p><div className="meta"><span><FileQuestion className="i" />{a.assignment_questions?.[0]?.count ?? 0} سؤال</span><span><Clock className="i" />ينتهي {fdate(a.ends_at)}</span></div>{(() => { const i = deadlineInfo(a.ends_at); return i && i.level > 0 ? <p><span className={'dl ' + i.tone}>{i.text}</span></p> : null })()}
     <Link className="btn" to={`/solve/${a.id}`}>{live ? 'متابعة الحل' : 'ابدأ'}</Link></article>
 }
 export function StudentHome() {
   const { profile } = useAuth(), r = useStudent()
   return <div className="page"><div className="pagehead"><div><h1>أهلًا، {profile?.full_name?.split(' ')[0] || ''} 👋</h1><p>جاهز تكمل رحلتك؟</p></div></div>
+    <RemindersBanner /><DashboardAnnouncements />
     <Wrap r={r}>{d => <>
       <div className="kpis">{[[CheckCircle2, 'الواجبات المكتملة', d.done.length, 'g'], [Hourglass, 'قيد المراجعة', d.waiting, 'o'], [ClipboardList, 'الواجبات المتاحة', d.avail.length, 'i'], [Target, 'متوسط الدرجات', d.avg != null ? d.avg + '%' : '—', 'p']].map(([I, l, v, c]) => <div key={l} className="kpi"><span className={'ic ' + c}><I size={22} className="i" /></span><div><span>{l}</span><b>{v}</b></div></div>)}</div>
+      <Link to="/performance" className="card row" style={{ textDecoration: 'none', gap: 14, marginTop: 16 }}><span className="tile" style={{ background: 'var(--c-primary-soft)', color: 'var(--c-primary)', marginBottom: 0 }}><BarChart3 size={24} className="i" /></span><div className="grow"><b>أدائي</b><p className="muted small">اعرف أقوى موضوعاتك وما يحتاج مراجعة.</p></div><span className="btn secondary sm">عرض التحليل</span></Link>
       <div className="sechead"><h2>متابعة التعلم</h2></div>
-      {d.prog ? <section className="cont" aria-label="متابعة الحل"><div className="row" style={{ alignItems: 'flex-start' }}><span className="tile" aria-hidden><Code2 size={26} className="i" /></span><div className="grow"><h3 style={{ margin: 0, fontSize: '1.1rem' }}>{d.prog.assignments?.title}</h3><p className="muted small">{d.prog.assignments?.lessons?.title}</p>
+      {d.prog ? <section className="cont" aria-label="متابعة الحل"><div className="row" style={{ alignItems: 'flex-start' }}><span className="tile" aria-hidden><Code2 size={26} className="i" /></span><div className="grow"><h3 style={{ margin: 0, fontSize: '1.1rem' }}>{d.prog.assignments?.title}</h3><p className="muted small">{d.prog.assignments?.lessons?.title || d.prog.assignments?.chapters?.title}</p>
         <div className="row" style={{ marginTop: 10 }}><div className="grow"><Progress value={pct(d.answered, d.total)} /></div><span className="small muted">{d.answered} / {d.total}</span></div></div></div><Link className="btn lg" to={`/solve/${d.prog.assignment_id}`}>متابعة الحل</Link></section>
         : <EmptyState icon={Play} title="لا يوجد واجب قيد الحل" text="ابدأ أحد الواجبات المتاحة وسيظهر هنا لتكمله لاحقًا." />}
+      <div className="sechead"><h2>المنهج الدراسي</h2><Link to="/learn" className="btn ghost sm">فتح في صفحة كاملة</Link></div>
+      <CurriculumBrowser />
+      <Link to="/tracks" className="card row" style={{ textDecoration: 'none', gap: 14 }}><span className="tile" style={{ background: 'var(--c-primary-soft)', color: 'var(--c-primary)', marginBottom: 0 }}><Layers size={24} className="i" /></span><div className="grow"><b>مسارات البرمجة</b><p className="muted small">JavaScript و Python وغيرها: شرح مقسّم إلى فصول وأجزاء مع امتحان على كل فصل.</p></div><span className="btn secondary sm">استكشف</span></Link>
       <div className="sechead"><h2>الواجبات المتاحة</h2>{d.avail.length > 3 && <Link to="/assignments" className="btn ghost sm">عرض الكل</Link>}</div>
       {d.avail.length ? <div className="availgrid">{d.avail.slice(0, 3).map(a => <AvailCard key={a.id} a={a} d={d} />)}</div> : <EmptyState icon={ClipboardList} title="لا توجد واجبات متاحة الآن" text="عندما ينشر المدرس واجبًا جديدًا سيظهر هنا." action={<Link className="btn secondary" to="/#curriculum">استكشف المنهج</Link>} />}
       <div className="twocol" style={{ marginTop: 24 }}><div><div className="sechead" style={{ marginTop: 0 }}><h2>آخر النتائج</h2>{d.done.length > 3 && <Link to="/results" className="btn ghost sm">كل النتائج</Link>}</div>
@@ -75,5 +86,5 @@ export function Results() {
 }
 export function Account() {
   const { profile, signOut } = useAuth(), nav = useNavigate()
-  return <div className="page narrow"><PageHeader title="حسابي" /><div className="card"><div className="row"><span className="avatar" style={{ width: 52, height: 52 }}>{profile?.full_name?.[0]}</span><div><b>{profile?.full_name}</b><p className="muted small ltr">{profile?.phone || '—'}</p></div></div></div><Btn variant="secondary" icon={LogOut} onClick={async () => { await signOut(); nav('/') }}>تسجيل الخروج</Btn></div>
+  return <div className="page narrow"><PageHeader title="حسابي" /><div className="card"><div className="row"><span className="avatar" style={{ width: 52, height: 52 }}>{profile?.full_name?.[0]}</span><div><b>{profile?.full_name}</b><p className="muted small ltr">{profile?.phone || '—'}</p></div></div></div><InstallApp /><Btn variant="secondary" icon={LogOut} onClick={async () => { await signOut(); nav('/') }}>تسجيل الخروج</Btn></div>
 }
