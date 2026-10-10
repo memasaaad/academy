@@ -11,3 +11,14 @@ export async function enablePush(userId) {
   reg.showNotification('تم تفعيل الإشعارات ✓', { body: 'ستصلك التنبيهات على هذا الجهاز.', icon: '/icon-192.png', dir: 'rtl', lang: 'ar' }); return 'on'
 }
 export async function disablePush() { const sub = await currentSub(); if (sub) { await sb.from('push_subscriptions').delete().eq('endpoint', sub.endpoint); await sub.unsubscribe() } }
+// تشخيص: حالة كل شرط يلزم لعمل الإشعارات على هذا الجهاز
+export async function diagnose() {
+  const d = { key: !!KEY, secure: window.isSecureContext, supported: pushSupported(), standalone: matchMedia('(display-mode: standalone)').matches || navigator.standalone === true, permission: 'Notification' in window ? Notification.permission : 'غير مدعوم', sw: false, sub: false }
+  try { const reg = await navigator.serviceWorker?.getRegistration(); d.sw = !!reg; d.sub = !!(reg && await reg.pushManager?.getSubscription()) } catch { /* ignore */ }
+  return d
+}
+export async function sendTest() {
+  const { data } = await sb.auth.getSession()
+  try { const r = await fetch('/api/push-test', { method: 'POST', headers: { Authorization: 'Bearer ' + data.session.access_token } }); const j = await r.json().catch(() => ({})); return r.ok ? { ok: true, ...j } : { ok: false, error: j.error || 'HTTP ' + r.status } }
+  catch (e) { return { ok: false, error: 'تعذر الوصول للسيرفر: ' + e.message } }
+}
