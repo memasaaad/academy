@@ -4,11 +4,15 @@
   --card-a:#ffffff;--card-b:#d6e5ff;--word1:#0a1a4a;--word2:#1f6bff;--line:#1f6bff;
   color-scheme:light;
 }
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .pub-login{
+  --bg:#050f33;--panel:#011645;--surface:#0b1a46;--field:#0a1a4d;--text:#f1f5ff;--muted:#8fa3d6;--border:rgba(90,140,255,.3);
+  --err:#ff6b81;--glow:rgba(47,128,255,.35);--card-a:#0a2a8a;--card-b:#02103a;--word1:#fff;--word2:#19c3ff;--line:#2f80ff;color-scheme:dark;}}
 :root[data-theme="dark"] .pub-login{
   --bg:#050f33;--panel:#011645;--surface:#0b1a46;--field:#0a1a4d;--text:#f1f5ff;--muted:#8fa3d6;--border:rgba(90,140,255,.3);
   --err:#ff6b81;--glow:rgba(47,128,255,.35);--card-a:#0a2a8a;--card-b:#02103a;--word1:#fff;--word2:#19c3ff;--line:#2f80ff;color-scheme:dark;
 }
-.pub-login,.pub-login *,.pub-login *::before,.pub-login *::after{box-sizing:border-box}
+.pub-login{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.pub-login *,.pub-login *::before,.pub-login *::after{box-sizing:inherit}
 .pub-login{margin:0;background:var(--bg);color:var(--text);font-family:"Cairo",system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;transition:background .35s,color .35s}
 .pub-login button,.pub-login input{font:inherit}
 .pub-login a{color:inherit}
@@ -51,11 +55,16 @@
 .pub-login .p-moon{display:none}
 :root[data-theme="dark"] .pub-login .p-sun{display:none}
 :root[data-theme="dark"] .pub-login .p-moon{display:block}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .pub-login .p-sun{display:none}:root:not([data-theme="light"]) .pub-login .p-moon{display:block}}
 .pub-login .p-view[hidden]{display:none}
 .pub-login .p-toast{margin-top:16px;padding:12px 16px;border-radius:12px;background:var(--surface);border:1px solid var(--border);font-size:.92rem;display:none}
 .pub-login .p-toast.p-on{display:block}
-@media (max-width:860px){.pub-login .p-page{grid-template-columns:1fr}
-.pub-login .p-brand{order:2;padding:30px 20px 70px}
-.pub-login .p-side{padding-top:76px}
-.pub-login .p-brand svg.p-card{width:200px}}
-@media (prefers-reduced-motion:reduce){.pub-login,.pub-login *,.pub-login *::before,.pub-login *::after{box-sizing:border-box}}
+@media (max-width:860px){.pub-login .p-page{grid-template-columns:1fr}.pub-login .p-brand{order:2;padding:30px 20px 70px}.pub-login .p-side{padding-top:76px}.pub-login .p-brand svg.p-card{width:200px}}
+@media (prefers-reduced-motion:reduce){.pub-login *{transition:none!important}}
+/* --- adaptation: original used html,body{height:100%}; inside the React root the page needs its own full height --- */
+.pub-login{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column}
+.pub-login .p-page{flex:1 0 auto;min-height:0}
+/* موبايل/تابلت: اللوجو صغير في أعلى المنتصف، والنموذج تحته، وحقوق الملكية في الآخر */
+@media (max-width:860px){.pub-login .p-page{display:flex;flex-direction:column;position:relative}.pub-login .p-brand{display:contents}
+.pub-login .p-brand svg.p-card{order:-1;width:88px;height:88px;margin:56px auto 0;filter:drop-shadow(0 8px 18px var(--glow))}.pub-login .p-tagline{display:none}
+.pub-login .p-side{order:0;flex:1 0 auto;position:static;padding:20px 24px 12px}.pub-login .p-copy{order:2;text-align:center;padding:8px 16px 22px}}

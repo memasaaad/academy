@@ -1,0 +1,20 @@
+/* قائمة جانبية للموبايل/التابلت (الطالب) + إصلاحات عامة للقوائم الجانبية */
+.shell,.adm{overflow-x:clip}
+.burger-s,.sdr,.sdr-scrim{display:none}
+@media(max-width:860px){
+  .burger-s{display:grid}
+  .sdr-scrim{display:block;position:fixed;inset:0;background:#0f172a99;z-index:80;opacity:0;pointer-events:none;transition:opacity .2s}
+  .sdr-scrim.show{opacity:1;pointer-events:auto}
+  .sdr{display:flex;flex-direction:column;position:fixed;inset-block:0;inset-inline-start:0;width:min(300px,84vw);z-index:90;background:linear-gradient(180deg,#0a1a4f,#08133a);color:#bcc9ee;padding:14px 12px calc(14px + env(safe-area-inset-bottom));overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;transform:translateX(100%);visibility:hidden;transition:transform .22s,visibility 0s .22s}
+  [dir=ltr] .sdr{transform:translateX(-100%)}
+  .sdr.open{transform:none;visibility:visible;transition:transform .22s}
+  .sdr-head{display:flex;align-items:center;gap:8px;padding:2px 2px 12px;border-bottom:1px solid #ffffff1a;margin-bottom:8px}
+  .sdr-head .brand{flex:1;min-width:0;flex-shrink:1;color:#fff;white-space:normal}.sdr-head .brand b{overflow-wrap:anywhere;line-height:1.35;font-size:.9rem}
+  .sdr .nl{display:flex;gap:var(--s3);align-items:center;padding:12px var(--s3);border-radius:var(--r-md);text-decoration:none;color:#bcc9ee;font-size:.95rem;font-weight:600}
+  .sdr .nl:hover{background:#ffffff0f;color:#fff}.sdr .nl.active{background:linear-gradient(135deg,#0a64f5,#139cf0);color:#fff;box-shadow:0 6px 16px #0a64f566}
+  .sdr .me{margin-top:auto;border-top:1px solid #ffffff1a;padding-top:var(--s3);display:flex;gap:var(--s3);align-items:center;color:#fff;font-size:.88rem}.sdr .me .avatar{background:#ffffff1f;color:#fff}
+  .sdr .me b{display:block;overflow-wrap:anywhere}
+  /* قائمة المدرس: عرض مناسب ونص الشعار لا يخرج خارجها */
+  .side{width:min(300px,86vw);max-width:100%;overflow-x:hidden;overscroll-behavior:contain}
+  .side .brand{min-width:0;flex-shrink:1;white-space:normal}.side .brand b{overflow-wrap:anywhere;line-height:1.35}
+}
