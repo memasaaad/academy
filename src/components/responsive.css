@@ -20,3 +20,10 @@ img,svg,video,canvas,iframe{max-width:100%}
 @media(max-width:360px){.topbar .brand b{display:none}.acontent{padding-inline:10px}}
 @media(min-width:1600px){.acontent{max-width:1440px}.page{max-width:1240px}.topbar .in{max-width:1560px}}
 @media(min-width:2200px){html{font-size:17px}}
+/* قائمة الإشعارات على الموبايل: تأخذ عرض الشاشة (بهامش 10px) بدل أن تخرج عن حدودها */
+@media(max-width:640px){
+  .bellw{position:static}
+  .bellw .dropp{inset-inline:10px;top:calc(100% + 6px);width:auto;max-width:none}
+  .bellw .dropp>div:last-child{max-height:min(460px,calc(100dvh - 150px))!important}
+  .notif b,.notif span{overflow-wrap:anywhere}
+}
