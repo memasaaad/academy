@@ -1,0 +1,8 @@
+/* لوحة الإشعارات (Portal داخل body): موبايل = عرض الشاشة بهامش 10px، ومن 641px = لوحة بعرض 360px بجوار الجرس */
+.bell-scrim{position:fixed;inset:0;z-index:70;background:#0f172a40}
+.bell-pop{position:fixed;z-index:80;top:calc(env(safe-area-inset-top,0px) + 66px);left:10px;right:10px;display:flex;flex-direction:column;max-height:calc(100dvh - env(safe-area-inset-top,0px) - 84px);background:var(--c-surface);color:var(--c-text);border:1px solid var(--c-border);border-radius:var(--r-lg);box-shadow:var(--sh-md);overflow:hidden;animation:pop .15s}
+.bell-head{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--c-border)}.bell-head b{flex:1}
+.bell-x{width:36px;height:36px}
+.bell-list{overflow-y:auto;overscroll-behavior:contain;flex:1;min-height:0}
+.bell-pop .notif{color:var(--c-text);overflow-wrap:anywhere}
+@media(min-width:641px){.bell-pop{right:auto;width:360px;max-height:min(520px,calc(100dvh - 100px));top:76px}.bell-scrim{background:transparent}.bell-x{display:none}}
