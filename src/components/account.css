@@ -22,3 +22,8 @@ body{font-size:.9375rem} /* = 15px بالحجم العادي، ويتبع خيا
 .pwmeter{height:5px;border-radius:99px;background:var(--c-track);overflow:hidden;margin-top:6px}.pwmeter i{display:block;height:100%;transition:width .2s,background .2s}
 .acc-ro{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border:1px dashed var(--c-border-2);border-radius:var(--r-md);background:var(--c-hover)}
 .acc-danger{border-color:color-mix(in srgb,var(--c-danger) 35%,var(--c-border))}
+/* رأس كارت قابل للطي */
+.acc-h.tg{width:100%;background:none;border:0;padding:0;cursor:pointer;text-align:start;font:inherit;color:inherit}
+.acc-h.tg[aria-expanded=false]{margin-bottom:0}
+.acc-h .chev{color:var(--c-muted);flex-shrink:0;transition:transform .2s}.acc-h.tg[aria-expanded=true] .chev{transform:rotate(180deg)}
+.acc-h.tg:focus-visible{outline:3px solid var(--c-primary-soft);outline-offset:4px;border-radius:var(--r-md)}

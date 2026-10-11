@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Bell, Download, Eye, EyeOff, FileDown, KeyRound, LogOut, Palette, ShieldCheck, User as UserIcon } from 'lucide-react'
+import { Bell, ChevronDown, Download, Eye, EyeOff, FileDown, KeyRound, LogOut, Palette, ShieldCheck, User as UserIcon } from 'lucide-react'
 import { sb } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { useTheme } from '../lib/theme'
@@ -10,7 +10,11 @@ import PushToggle from './PushToggle'
 import InstallApp from './InstallApp'
 import './account.css'
 const Switch = ({ on, onChange, label }) => <button type="button" role="switch" aria-checked={on} aria-label={label} className="sw" onClick={() => onChange(!on)}><i /></button>
-const Section = ({ icon: I, title, desc, children, danger }) => <section className={'acc-card' + (danger ? ' acc-danger' : '')}><div className="acc-h"><span className="ic"><I size={20} className="i" /></span><div><h2>{title}</h2>{desc && <p>{desc}</p>}</div></div>{children}</section>
+// collapsible: الكارت يظهر برأسه دائمًا، والمحتوى ينزل/يطوى بالسهم (ويدفع ما تحته للأسفل)
+const Section = ({ icon: I, title, desc, children, danger, collapsible }) => {
+  const [open, setOpen] = useState(!collapsible), head = <><span className="ic"><I size={20} className="i" /></span><div className="grow"><h2>{title}</h2>{desc && <p>{desc}</p>}</div>{collapsible && <ChevronDown size={20} className="i chev" />}</>
+  return <section className={'acc-card' + (danger ? ' acc-danger' : '')}>{collapsible ? <button type="button" className="acc-h tg" aria-expanded={open} onClick={() => setOpen(!open)}>{head}</button> : <div className="acc-h">{head}</div>}{open && children}</section>
+}
 const csv = rows => '\ufeff' + rows.map(r => r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')).join('\r\n')
 const save = (name, text) => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'text/csv;charset=utf-8' })); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1500) }
 const strength = p => { const s = (p.length >= 8) + /\d/.test(p) + /[a-zA-Z\u0600-\u06FF]/.test(p) + (/[^\w\s]/.test(p) || (/[a-z]/.test(p) && /[A-Z]/.test(p))); return p.length < 6 ? [0, '', 'var(--c-danger)'] : [[25, 'ضعيفة', 'var(--c-danger)'], [25, 'ضعيفة', 'var(--c-danger)'], [55, 'متوسطة', 'var(--c-warning)'], [80, 'جيدة', 'var(--c-primary)'], [100, 'قوية', 'var(--c-success)']][s] }
@@ -64,7 +68,7 @@ export default function AccountPage() {
           <Btn variant="secondary" icon={Download} disabled={xb} onClick={exportData}>{xb ? 'جارٍ التجهيز…' : isAdmin ? 'تصدير قائمة الطلاب' : 'تنزيل نتائجي'}</Btn></Section>
       </div>
       <div className="acc-col">
-        <Section icon={Bell} title="الإشعارات" desc="اختر ما تريد أن يصلك">
+        <Section icon={Bell} title="الإشعارات" desc="اختر ما تريد أن يصلك" collapsible>
           {rows.map(([k, t, d]) => <div key={k} className="optrow"><div className="t"><b>{t}</b><small>{d}</small></div><Switch on={prefs[k] !== false} onChange={v => setPref(k, v)} label={t} /></div>)}</Section>
         <PushToggle /><InstallApp />
         <Section icon={Palette} title="المظهر" desc="يُحفظ على هذا الجهاز">
