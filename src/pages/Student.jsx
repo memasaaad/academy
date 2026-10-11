@@ -4,7 +4,7 @@ import { BarChart3, Layers } from 'lucide-react'
 import { RemindersBanner } from '../components/Reminders'
 import { DashboardAnnouncements } from '../components/Announcements'
 import InstallApp from '../components/InstallApp'
-import PushToggle from '../components/PushToggle'
+import AccountPage from '../components/AccountPage'
 import { deadlineInfo } from '../lib/deadline'
 import { useState } from 'react'
 import { Calendar, CheckCircle2, ClipboardList, Clock, Code2, Eye, FileQuestion, Hourglass, LogOut, Play, Target, Trophy } from 'lucide-react'
@@ -86,6 +86,5 @@ export function Results() {
   return <div className="page"><PageHeader title="نتائجي" desc="درجاتك في الواجبات المسلّمة." /><Wrap r={r}>{d => d.done.length ? d.done.map(t => <ResultRow key={t.id} t={t} />) : <EmptyState icon={Trophy} title="لا توجد نتائج بعد" text="سلّم أول واجب لتظهر نتيجته هنا." action={<Link className="btn" to="/assignments">اذهب إلى الواجبات</Link>} />}</Wrap></div>
 }
 export function Account() {
-  const { profile, signOut } = useAuth(), nav = useNavigate()
-  return <div className="page narrow"><PageHeader title="حسابي" /><div className="card"><div className="row"><span className="avatar" style={{ width: 52, height: 52 }}>{profile?.full_name?.[0]}</span><div><b>{profile?.full_name}</b><p className="muted small ltr">{profile?.phone || '—'}</p></div></div></div><PushToggle /><InstallApp /><Btn variant="secondary" icon={LogOut} onClick={async () => { await signOut(); nav('/') }}>تسجيل الخروج</Btn></div>
+  return <div className="page"><AccountPage /></div>
 }
