@@ -6,7 +6,6 @@ import { AreaChart } from '../../components/Charts'
 import OnlineNow, { usePresence } from './OnlineNow'
 import { Alert, Badge, EmptyState, ErrorState, PageHeader, PageSkeleton, Progress, fdt, pct, useAsync } from '../../components/ui'
 import '../../components/insights.css'
-import PushToggle from '../../components/PushToggle'
 const tones = ['tone1', 'tone2', 'tone3', 'tone4']
 const st = (n, one = 'طالب', two = 'طالبان', few = 'طلاب', many = 'طالبًا') => n === 1 ? `${one} واحد` : n === 2 ? two : `${n} ${n <= 10 ? few : many}`
 function Sev({ tone = '', icon, title, children, to }) {
@@ -38,7 +37,6 @@ export default function Overview() {
     if (i.ended.length) alerts.push(<Sev key="en" icon="⏰" title={`${i.ended.length} ${i.ended.length === 1 ? 'واجب انتهى' : 'واجبات انتهت'} خلال آخر 3 أيام`} to="/admin/assignments"><ul>{i.ended.map(x => <li key={x.id}>{x.title} — {fdt(x.ends_at)}</li>)}</ul></Sev>)
   }
   return <><PageHeader title="الرئيسية" desc="نظرة سريعة على الطلاب والواجبات وما يحتاج متابعتك." />
-    <PushToggle hideWhenOn />
     {/* 1) الأرقام */}
     <div className="stat4">{stats.map(([I, l, v, sub, c]) => <div key={l} className="stat"><span className={'sico ' + c}><I size={22} className="i" /></span><b>{v}</b><span className="sl">{l}</span><small>{sub}</small></div>)}</div>
     {!i && <Alert tone="info">لتفعيل التحليلات الذكية شغّل ملف <b className="ltr">008_insights_practice_announcements.sql</b> في Supabase.</Alert>}
