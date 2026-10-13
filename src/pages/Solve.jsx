@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, CheckCircle2, CircleHelp, Clock, Flag, ImagePlus, Trophy, X, XCircle } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Camera, CheckCircle2, ListChecks, CircleHelp, Clock, Flag, ImagePlus, Trophy, X, XCircle } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { ThemeToggle } from '../lib/theme'
 import AnswerView, { hasAns, normAns, useSigned } from '../components/AnswerView'
+import PhotoSubmit from '../components/PhotoSubmit'
+import '../components/photo.css'
 import { sb } from '../lib/supabase'
 import { Alert, Badge, Btn, ErrorState, IconBtn, Modal, Progress, Skeleton, fdt, friendly, grade, nf, pct, useUi } from '../components/ui'
 const hms = s => { s = Math.max(0, Math.floor(s)); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return `${h ? h + ':' : ''}${String(m).padStart(h ? 2 : 1, '0')}:${String(s % 60).padStart(2, '0')}` }
@@ -22,7 +24,7 @@ function EssayAnswer({ value, onChange, uid, attempt, qid, code }) {
 export default function Solve() {
   const { id } = useParams(), nav = useNavigate(), { toast } = useUi(), { session } = useAuth()
   const [meta, setMeta] = useState({ title: '', auto: true, ends: null, lesson: '' }), [att, setAtt] = useState(null), [qs, setQs] = useState([]), [ans, setAns] = useState({}), [i, setI] = useState(0)
-  const [err, setErr] = useState(''), [confirm, setConfirm] = useState(false), [res, setRes] = useState(null), [sum, setSum] = useState({ unans: 0 }), [saved, setSaved] = useState(''), [busy, setBusy] = useState(false), [flags, setFlags] = useState({}), [now, setNow] = useState(Date.now()), [t0, setT0] = useState(Date.now())
+  const [mode, setMode] = useState(null), [err, setErr] = useState(''), [confirm, setConfirm] = useState(false), [res, setRes] = useState(null), [sum, setSum] = useState({ unans: 0 }), [saved, setSaved] = useState(''), [busy, setBusy] = useState(false), [flags, setFlags] = useState({}), [now, setNow] = useState(Date.now()), [t0, setT0] = useState(Date.now())
   const dirty = useRef(new Set()), ansRef = useRef({}), timer = useRef(), lk = a => `ans:${a}`
   const load = async () => {
     setErr('')
@@ -32,7 +34,8 @@ export default function Solve() {
     const mm = {}; (sa || []).forEach(r => { if (r.answer != null) mm[r.question_id] = r.answer })
     try { const l = JSON.parse(localStorage.getItem(lk(a)) || '{}'); Object.keys(l).forEach(k => { if (JSON.stringify(mm[k]) !== JSON.stringify(l[k])) { mm[k] = l[k]; dirty.current.add(k) } }); setFlags(JSON.parse(localStorage.getItem('flag:' + a) || '{}')) } catch {}
     if (at) setT0(new Date(at.started_at).getTime())
-    ansRef.current = mm; setAns(mm); setQs(q || []); setAtt(a); if (dirty.current.size) flush(a)
+    const { data: ap } = await sb.from('assignments').select('allow_photo').eq('id', id).maybeSingle()   // قبل تشغيل 013 لا يوجد العمود فلا يظهر الخيار
+    ansRef.current = mm; setAns(mm); setQs(q || []); setAtt(a); setMode(ap?.allow_photo === true && !Object.keys(mm).length ? 'choose' : 'questions'); if (dirty.current.size) flush(a)
   }
   useEffect(() => { load() }, [id]); useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t) }, [])
   const flush = async (a = att) => {
@@ -45,6 +48,13 @@ export default function Solve() {
   const flag = qid => { const f = { ...flags, [qid]: !flags[qid] }; setFlags(f); localStorage.setItem('flag:' + att, JSON.stringify(f)) }
   const submit = async () => { setBusy(true); clearTimeout(timer.current); await flush(); const { data, error } = await sb.rpc('submit_attempt', { p_attempt: att }); setBusy(false); setConfirm(false); if (error) return toast(friendly(error), 'error'); localStorage.removeItem(lk(att)); setSum({ unans: qs.filter(x => !hasAns(ansRef.current[x.id])).length }); setRes(data); toast('تم تسليم الواجب') }
   if (err) return <div className="page narrow"><ErrorState text={err} /><div style={{ textAlign: 'center', marginTop: 16 }}><Btn variant="secondary" onClick={() => nav('/assignments')}>العودة إلى الواجبات</Btn></div></div>
+  if (res?.mode === 'photo') return <div className="page narrow"><div className="card resultcard"><div className="trophy"><CheckCircle2 size={40} className="i" /></div><h1>تم إرسال حلّك</h1><p className="muted">{meta.title}</p><Alert tone="info">سيراجع المدرس صور حلّك ويضع الدرجة، وتظهر لك النتيجة هنا فور الانتهاء.</Alert>
+    <div className="rmeta"><div><small>تاريخ التسليم</small><b>{fdt(res.submitted_at)}</b></div><div style={{ textAlign: 'end' }}><small>عدد الصور</small><b>{(res.photo_paths || []).length}</b></div></div><div className="row" style={{ marginTop: 20, flexWrap: 'wrap' }}><Link className="btn secondary grow" to={`/review/${res.id}`}>عرض صوري</Link><Link className="btn grow" to="/dashboard">العودة للرئيسية</Link></div></div></div>
+  if (mode === 'choose' && att) return <div className="page narrow"><div className="row" style={{ marginBottom: 10 }}><IconBtn icon={ArrowRight} label="الرجوع إلى الواجبات" onClick={() => nav('/assignments')} /><div><h1 style={{ fontSize: '1.3rem', margin: 0 }}>{meta.title}</h1><p className="muted small" style={{ margin: 0 }}>{meta.lesson}</p></div></div>
+    <div className="card"><h2 style={{ fontSize: '1.1rem', margin: 0 }}>كيف تريد تسليم الحل؟</h2><p className="muted small">اختر الطريقة الأنسب لك. لا يمكن الجمع بين الطريقتين في نفس المحاولة.</p>
+      <div className="pchoose"><button type="button" className="pcard" onClick={() => setMode('questions')}><span className="pico"><ListChecks size={28} className="i" /></span><span><b>حل الأسئلة هنا</b><br /><span className="d">أجب عن الأسئلة واحدًا واحدًا داخل الموقع{meta.auto ? '، وتظهر درجة الأسئلة الموضوعية فورًا' : ''}.</span></span></button>
+        <button type="button" className="pcard" onClick={() => setMode('photo')}><span className="pico"><Camera size={28} className="i" /></span><span><b>تصوير الحل ورفعه</b><br /><span className="d">حُلّ على ورقة ثم صوّر الصفحات وارفعها مرة واحدة، ويصححها المدرس.</span></span></button></div></div></div>
+  if (mode === 'photo' && att) return <PhotoSubmit attempt={att} uid={session?.user.id} title={meta.title} onBack={() => setMode('choose')} onDone={r => setRes(r)} />
   if (res) { const p = pct(res.score, res.max_score), mins = Math.max(1, Math.round((new Date(res.submitted_at) - new Date(res.started_at)) / 60000))
     return <div className="page narrow"><div className="card resultcard">
       {meta.auto ? <><div className="trophy"><Trophy size={40} className="i" /></div><h1>{p >= 50 ? 'أحسنت!' : 'تم التسليم'}</h1><p className="muted">{meta.title}{meta.lesson && ` · ${meta.lesson}`}</p>
