@@ -4,7 +4,7 @@ import { ArrowRight, ClipboardList, FileUp, Lock, LockOpen, Pencil, Plus, Trash2
 import { sb } from '../../lib/supabase'
 import { TYPES, importQuestions } from '../../lib/qio'
 import { Alert, Badge, Btn, EmptyState, ErrorState, Field, IconBtn, PageHeader, PageSkeleton, SearchInput, fdate, friendly, useAsync, useUi } from '../../components/ui'
-const blank = { title: '', chapter_id: '', lesson_id: '', starts_at: '', ends_at: '', is_open: true, max_attempts: 1, total_marks: '', auto_grade: true }
+const blank = { title: '', chapter_id: '', lesson_id: '', starts_at: '', ends_at: '', is_open: true, max_attempts: 1, total_marks: '', auto_grade: true, allow_photo: true }
 const loc = d => d ? new Date(new Date(d) - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 16) : ''
 const stat = a => !a.is_open ? ['مغلق', ''] : a.ends_at && new Date(a.ends_at) < Date.now() ? ['منتهي', 'danger'] : a.starts_at && new Date(a.starts_at) > Date.now() ? ['مجدول', 'info'] : ['مفتوح', 'success']
 export default function Assignments() {
@@ -21,8 +21,8 @@ export default function Assignments() {
   const upFile = async e => { const file = e.target.files[0]; if (!file) return; try { const l = JSON.parse(await file.text()); const r = await importQuestions(l, () => {}, { lessonId: f.lesson_id }); await loadQs(); setSel(s => new Set([...s, ...r.ids])); toast(`تم رفع ${r.count} سؤال داخل الدرس وتحديدها`) } catch (er) { toast(friendly(er), 'error') } e.target.value = '' }
   const save = async () => {
     setErr(''); if (!f.title || !f.chapter_id) return setErr('اكتب اسم الواجب واختر الفصل. (بدون اختيار درس يكون امتحانًا على الفصل كله).'); if (!sel.size) return setErr('اختر سؤالًا واحدًا على الأقل.')
-    const row = { title: f.title, chapter_id: f.chapter_id || null, lesson_id: f.lesson_id || null, starts_at: f.starts_at ? new Date(f.starts_at).toISOString() : null, ends_at: f.ends_at ? new Date(f.ends_at).toISOString() : null, is_open: f.is_open, max_attempts: +f.max_attempts || 1, total_marks: f.total_marks ? +f.total_marks : null, auto_grade: f.auto_grade }
-    const r = f.id ? await sb.from('assignments').update(row).eq('id', f.id).select().single() : await sb.from('assignments').insert(row).select().single(); if (r.error) return setErr(friendly(r.error))
+    const row = { title: f.title, chapter_id: f.chapter_id || null, lesson_id: f.lesson_id || null, starts_at: f.starts_at ? new Date(f.starts_at).toISOString() : null, ends_at: f.ends_at ? new Date(f.ends_at).toISOString() : null, is_open: f.is_open, max_attempts: +f.max_attempts || 1, total_marks: f.total_marks ? +f.total_marks : null, auto_grade: f.auto_grade, allow_photo: f.allow_photo !== false }
+    const send = x => f.id ? sb.from('assignments').update(x).eq('id', f.id).select().single() : sb.from('assignments').insert(x).select().single(); let r = await send(row); if (r.error && /allow_photo/.test(r.error.message || '')) { const { allow_photo, ...rest } = row; r = await send(rest) } /* قبل تشغيل 013 */; if (r.error) return setErr(friendly(r.error))
     await sb.from('assignment_questions').delete().eq('assignment_id', r.data.id)
     const { error } = await sb.from('assignment_questions').insert([...sel].map((question_id, position) => ({ assignment_id: r.data.id, question_id, position }))); if (error) return setErr(friendly(error))
     toast(f.id ? 'تم حفظ الواجب' : 'تم إنشاء الواجب'); setF(null); reload()
@@ -36,6 +36,7 @@ export default function Assignments() {
         <Field label="عدد المحاولات"><input type="number" min="1" value={f.max_attempts} onChange={e => set('max_attempts', e.target.value)} /></Field><Field label="الدرجة الكلية" hint="اتركها فارغة لتكون مجموع درجات الأسئلة"><input type="number" value={f.total_marks} onChange={e => set('total_marks', e.target.value)} /></Field></div>
       <label className="check"><input type="checkbox" checked={f.is_open} onChange={e => set('is_open', e.target.checked)} />الواجب مفتوح للطلاب</label>
       <label className="check"><input type="checkbox" checked={f.auto_grade} onChange={e => set('auto_grade', e.target.checked)} />تصحيح تلقائي للأسئلة الموضوعية</label>
+      <label className="check"><input type="checkbox" checked={f.allow_photo !== false} onChange={e => set('allow_photo', e.target.checked)} />السماح للطالب بتسليم حلّه كصور (يصوّر ورقته ويرفعها مرة واحدة)</label>
       <Alert tone="info">{f.auto_grade ? 'الطالب يرى درجة الأسئلة الموضوعية فور التسليم، والمقالي ينتظر تصحيحك.' : 'يصلك الواجب كله للتصحيح، ولا تظهر النتيجة للطالب إلا بعد انتهائك.'}</Alert></div>
     {f.chapter_id ? <div className="card"><div className="row between wrapx"><h3 style={{ margin: 0 }}>الأسئلة ({sel.size} من {qs.length})</h3><div className="row wrapx"><Btn size="sm" variant="secondary" onClick={() => setSel(new Set(qs.map(x => x.id)))}>كل الأسئلة المعروضة</Btn><Btn size="sm" variant="secondary" onClick={() => setSel(new Set())}>مسح</Btn></div></div>
       {f.lesson_id && <Field label="رفع ملف أسئلة (JSON) داخل هذا الدرس" hint="تُضاف الأسئلة إلى الدرس المختار وتُحدد للواجب تلقائيًا."><input type="file" accept=".json" onChange={upFile} /></Field>}
