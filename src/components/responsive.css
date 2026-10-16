@@ -4,7 +4,7 @@ img,svg,video,canvas,iframe{max-width:100%}
 .tablew{overflow-x:auto;-webkit-overflow-scrolling:touch}
 @media(max-width:860px){
   .acontent{padding:var(--s4) var(--s3)}
-  .grid2,.grid3{grid-template-columns:1fr}
+  .grid2,.grid3{grid-template-columns:minmax(0,1fr)}
   input,select,textarea{font-size:16px} /* يمنع تكبير الصفحة تلقائيًا على iOS عند الكتابة */
   .btn{min-height:42px}
 }
@@ -20,3 +20,19 @@ img,svg,video,canvas,iframe{max-width:100%}
 @media(max-width:360px){.topbar .brand b{display:none}.acontent{padding-inline:10px}}
 @media(min-width:1600px){.acontent{max-width:1440px}.page{max-width:1240px}.topbar .in{max-width:1560px}}
 @media(min-width:2200px){html{font-size:17px}}
+/* أي صف فيه زرّان أو أكثر يلتف بدل أن يخرج عن الشاشة */
+.row:has(> .btn + .btn),.row:has(> .btn + button),.row:has(> button + .btn),.row:has(> button + button){flex-wrap:wrap}
+@media(max-width:640px){
+  .btn{white-space:normal;text-align:center;max-width:100%}
+  .row:has(> .btn + .btn)>.btn,.row.wrapx>.btn{flex:1 1 auto}
+}
+/* الإشعار المؤقت (Toast) يظهر أسفل الهيدر على الموبايل بدل أن يغطي أزرار الحفظ أسفل الصفحة */
+@media(max-width:860px){
+  .toasts{top:calc(env(safe-area-inset-top,0px) + 72px);bottom:auto;inset-inline:var(--s3);align-items:center}
+  .toast{max-width:100%}
+}
+/* شبكة أمان إضافية: لا شيء يوسّع الصفحة أكبر من الشاشة */
+.page,.acontent,.card,.qcard,article,section{min-width:0}
+.ctx,.ans p,.qt,.card h1,.card h2,.card h3{overflow-wrap:anywhere}
+.card pre,.qcard pre,pre.code{max-width:100%;overflow-x:auto}
+@media(max-width:640px){.row{flex-wrap:wrap}.row.between{row-gap:8px}}

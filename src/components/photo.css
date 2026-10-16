@@ -1,10 +1,10 @@
 /* تسليم الحل بالصور */
-.pchoose{display:grid;grid-template-columns:1fr 1fr;gap:var(--s3);margin-top:var(--s4)}
+.pchoose{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--s3);margin-top:var(--s4)}
 .pcard{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:var(--s5) var(--s4);border:2px solid var(--c-border);border-radius:var(--r-lg);background:var(--c-surface);cursor:pointer;font:inherit;color:inherit;transition:border-color .15s,transform .15s}
 .pcard:hover,.pcard:focus-visible{border-color:var(--c-primary);transform:translateY(-2px);outline:0}
 .pcard .pico{width:60px;height:60px;border-radius:19px;display:grid;place-items:center;background:var(--c-primary-soft);color:var(--c-primary)}
 .pcard b{font-size:1.05rem}.pcard .d{font-size:.85rem;color:var(--c-muted)}
-@media(max-width:640px){.pchoose{grid-template-columns:1fr}.pcard{flex-direction:row;text-align:start;padding:var(--s4)}.pcard .pico{flex-shrink:0}}
+@media(max-width:640px){.pchoose{grid-template-columns:minmax(0,1fr)}.pcard{flex-direction:row;text-align:start;padding:var(--s4)}.pcard .pico{flex-shrink:0}}
 .ptips{margin:8px 0 0;padding-inline-start:20px;color:var(--c-muted);font-size:.88rem;line-height:1.9}
 .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-block:var(--s3)}
 .pthumb{position:relative;aspect-ratio:3/4;border-radius:var(--r-md);overflow:hidden;border:1px solid var(--c-border);background:var(--c-hover)}

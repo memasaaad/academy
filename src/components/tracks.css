@@ -15,7 +15,7 @@
 .trk-banner::before{content:"";position:absolute;inset:0;z-index:-1;background-image:linear-gradient(#ffffff14 50%,transparent 50%),linear-gradient(90deg,#ffffff0f 50%,transparent 50%);background-size:44px 44px}
 .trk-banner .trk-art{width:150px;flex-shrink:0}.trk-banner h1{font-size:1.7rem}.trk-banner p{opacity:.92}
 .trk-banner .trk-bar{max-width:340px;margin-top:10px}
-@media(max-width:640px){.trk-banner{flex-direction:column;text-align:center}.trk-banner .trk-bar{margin-inline:auto}.trk-grid{grid-template-columns:repeat(2,1fr);gap:var(--s3)}.trk-card{padding:16px 10px 12px;border-radius:20px}.trk-card h3{font-size:1.1rem}}
+@media(max-width:640px){.trk-banner{flex-direction:column;text-align:center}.trk-banner .trk-bar{margin-inline:auto}.trk-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--s3)}.trk-card{padding:16px 10px 12px;border-radius:20px}.trk-card h3{font-size:1.1rem}}
 /* المستعرض */
 .cb-ch{background:var(--c-surface);border:1px solid var(--c-border);border-radius:var(--r-lg);margin-block:var(--s3);overflow:hidden}
 .cb-head{display:flex;align-items:center;gap:var(--s3);padding:var(--s3) var(--s4);cursor:pointer;width:100%;background:none;border:0;text-align:start}
