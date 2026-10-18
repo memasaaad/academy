@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, CheckCircle2, Hourglass, MinusCircle, XCircle } 
 import { sb } from '../lib/supabase'
 import AnswerView, { isRich } from '../components/AnswerView'
 import PhotoAnswerView from '../components/PhotoAnswerView'
+import RegradeRequest from '../components/RegradeRequest'
 import { Alert, Badge, Btn, EmptyState, ErrorState, PageSkeleton, friendly, grade, nf, pct, useAsync } from '../components/ui'
 const arr = v => Array.isArray(v) ? v : v == null || v === '' || isRich(v) ? [] : [v]
 export default function Review() {
@@ -13,13 +14,14 @@ export default function Review() {
   if (error) return <div className="page narrow"><ErrorState text={friendly(error)} onRetry={reload} /></div>
   const a = d.attempt
   if (a.mode === 'photo') { const pp = pct(a.score, a.max_score); return <div className="page narrow"><div className="pagehead"><div><h1>مراجعة الحل</h1><p>{d.title} · {d.student}</p></div>{a.status === 'graded' && <div style={{ textAlign: 'end' }}><b style={{ fontSize: '1.5rem' }}>{nf(a.score)} / {nf(a.max_score)}</b> <Badge tone={pp >= 50 ? 'success' : 'danger'}>{pp}% · {grade(pp)}</Badge></div>}</div>
-    {a.status !== 'graded' && <Alert tone="info">تم إرسال حلّك بالصور وهو بانتظار تصحيح المدرس. ستظهر الدرجة هنا فور الانتهاء.</Alert>}{a.photo_feedback && <div className="ans good"><b>ملاحظة المدرس</b><p>{a.photo_feedback}</p></div>}
+    {a.status !== 'graded' && <Alert tone="info">تم إرسال حلّك بالصور وهو بانتظار تصحيح المدرس. ستظهر الدرجة هنا فور الانتهاء.</Alert>}<RegradeRequest a={a} onDone={reload} />{a.photo_feedback && <div className="ans good"><b>ملاحظة المدرس</b><p>{a.photo_feedback}</p></div>}
     <div className="card"><h3 style={{ marginTop: 0 }}>صور حلّك ({(a.photo_paths || []).length})</h3><PhotoAnswerView paths={a.photo_paths || []} />{a.photo_note && <div className="ans" style={{ marginTop: 12 }}><b>ملاحظتك للمدرس</b><p>{a.photo_note}</p></div>}</div></div> }
   const p = pct(a.score, a.max_score), st = it => it.pending ? 'pending' : it.is_correct || (it.earned >= it.marks && it.marks > 0) ? 'ok' : it.earned > 0 ? 'part' : 'bad'
   const meta = { ok: ['صحيح', 'success', CheckCircle2, 'ok'], bad: ['خطأ', 'danger', XCircle, 'bad'], part: ['جزئي', 'warning', MinusCircle, 'wt'], pending: ['بانتظار المراجعة', 'warning', Hourglass, 'wt'] }
   const all = d.items.map((it, n) => ({ ...it, n })), items = all.filter(it => !wo || ['bad', 'part'].includes(st(it))), it = items[Math.min(cur, items.length - 1)]
   const s = it && st(it), [lb, tone, I] = it ? meta[s] : [], mine = it ? arr(it.answer) : [], hasOpt = it?.options.length > 0
   return <div className="page"><div className="pagehead"><div><h1>مراجعة الإجابات</h1><p>{d.title} · {d.student}</p></div><div style={{ textAlign: 'end' }}><b style={{ fontSize: '1.5rem' }}>{nf(a.score)} / {nf(a.max_score)}</b> <Badge tone={p >= 50 ? 'success' : 'danger'}>{p}% · {grade(p)}</Badge></div></div>
+    <RegradeRequest a={a} onDone={reload} />
     {!it ? <><label className="check"><input type="checkbox" checked={wo} onChange={e => { setWo(e.target.checked); setCur(0) }} />عرض الأسئلة التي أخطأت فيها فقط</label><EmptyState icon={CheckCircle2} title="لا توجد أخطاء" text="أجبت عن كل الأسئلة بشكل صحيح." /></> :
     <div className="revgrid"><article className={'card rv ' + s} style={{ margin: 0 }}>
       <div className="row between"><h2 style={{ fontSize: '1.1rem' }}>السؤال {String(it.n + 1).padStart(2, '0')}</h2><Badge tone={tone} icon={I}>{lb}</Badge></div>
